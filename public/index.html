@@ -88,13 +88,6 @@
       transform: scale(0.95);
     }
 
-    .nav-icon.active {
-      background: var(--ig-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
     /* Stories Bar */
     .stories-bar {
       margin-top: 60px;
@@ -1079,21 +1072,16 @@
   </style>
 </head>
 <body>
-  <!-- Top Navigation -->
+  <!-- Instagram-style Top Navbar -->
   <div class="top-nav">
     <div class="nav-logo" onclick="showSection('feed')">GigHub</div>
     <div class="nav-icons">
-      <i class="fas fa-home nav-icon active" onclick="showSection('feed')" title="Home"></i>
-      <i class="fas fa-search nav-icon" onclick="showSection('explore')" title="Explore"></i>
-      <i class="fas fa-play-circle nav-icon" onclick="showSection('reels')" title="Reels"></i>
-      <i class="fas fa-plus-circle nav-icon" onclick="showSection('create')" title="Create Post"></i>
-      <i class="fas fa-upload nav-icon" onclick="showSection('upload')" title="Upload Status/Shorts"></i>
+      <i class="fas fa-search nav-icon" onclick="showSection('explore')" title="Search"></i>
       <div style="position: relative;">
         <i class="fas fa-bell nav-icon" onclick="showNotifications()" title="Notifications"></i>
         <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
       </div>
       <i class="fas fa-moon nav-icon" id="darkModeIcon" onclick="toggleDarkMode()" title="Toggle Dark Mode"></i>
-      <i class="fas fa-user-circle nav-icon" onclick="showSection('profile')" title="Profile"></i>
       <i class="fas fa-sign-out-alt nav-icon" onclick="logout()" title="Logout"></i>
     </div>
   </div>
@@ -1261,12 +1249,16 @@
       <i class="fas fa-search"></i>
       <span>Explore</span>
     </div>
+    <div class="bottom-nav-item" onclick="showSection('create')">
+      <i class="fas fa-plus-circle"></i>
+      <span>Create</span>
+    </div>
     <div class="bottom-nav-item" onclick="showSection('reels')">
       <i class="fas fa-play-circle"></i>
       <span>Reels</span>
     </div>
     <div class="bottom-nav-item" onclick="showSection('upload')">
-      <i class="fas fa-plus-square"></i>
+      <i class="fas fa-upload"></i>
       <span>Upload</span>
     </div>
     <div class="bottom-nav-item" onclick="showSection('profile')">

@@ -71,40 +71,19 @@ function showSection(sectionName) {
       return;
     }
 
-    // Update nav icons
-    const navIcons = document.querySelectorAll('.nav-icon');
-    navIcons.forEach(icon => icon.classList.remove('active'));
-
-    // Update bottom nav
+    // Update bottom nav only (top nav no longer has navigation icons)
     const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
     bottomNavItems.forEach(item => item.classList.remove('active'));
 
-    // Activate appropriate icon - handle both top and bottom nav separately
-    const topIconMap = {
-      'feed': 0,
-      'explore': 1,
-      'reels': 2,
-      'create': 3,
-      'upload': 4,
-      'profile': 5,
-      'logout': 6
-    };
-
+    // Map section names to bottom navigation indices
     const bottomIconMap = {
       'feed': 0,
       'explore': 1,
-      'reels': 2,
-      'create': -1,  // No create button in bottom nav
-      'upload': 3,
-      'profile': 4
+      'create': 2,
+      'reels': 3,
+      'upload': 4,
+      'profile': 5
     };
-
-    // Update top navigation
-    if (topIconMap[sectionName] !== undefined && topIconMap[sectionName] >= 0) {
-      if (navIcons[topIconMap[sectionName]]) {
-        navIcons[topIconMap[sectionName]].classList.add('active');
-      }
-    }
 
     // Update bottom navigation
     if (bottomIconMap[sectionName] !== undefined && bottomIconMap[sectionName] >= 0) {
