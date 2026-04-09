@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Profile - GigHub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #fafafa; padding-bottom: 60px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .profile-header { background: white; border-radius: 16px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .profile-top { display: flex; gap: 30px; align-items: start; }
+    .profile-avatar { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem; font-weight: 700; flex-shrink: 0; }
+    .profile-info { flex: 1; }
+    .profile-name { font-size: 2rem; margin-bottom: 5px; }
+    .profile-tagline { color: #667eea; font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+    .profile-bio { color: #666; line-height: 1.6; margin-bottom: 15px; }
+    .profile-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 15px; }
+    .stat { background: #f8f9fa; padding: 10px 20px; border-radius: 8px; text-align: center; }
+    .stat-value { font-size: 1.5rem; font-weight: 700; color: #667eea; }
+    .stat-label { font-size: 0.85rem; color: #999; }
+    .availability-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+    .available { background: #d4edda; color: #155724; }
+    .busy { background: #fff3cd; color: #856404; }
+    .not-available { background: #f8d7da; color: #721c24; }
+    .card { background: white; border-radius: 16px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .card h2 { color: #667eea; margin-bottom: 20px; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 10px; }
+    .tag { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 0.95rem; }
+    .experience-item, .certificate-item, .education-item { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid #667eea; }
+    .item-title { font-size: 1.2rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+    .item-subtitle { color: #667eea; font-weight: 600; margin-bottom: 5px; }
+    .item-duration { color: #999; font-size: 0.9rem; margin-bottom: 10px; }
+    .item-description { color: #666; line-height: 1.6; }
+    .social-links { display: flex; gap: 15px; flex-wrap: wrap; }
+    .social-link { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: #f8f9fa; border-radius: 8px; text-decoration: none; color: #333; transition: all 0.3s; }
+    .social-link:hover { background: #667eea; color: white; transform: translateY(-2px); }
+    .follow-btn { padding: 12px 30px; border: 2px solid #667eea; background: white; color: #667eea; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s; font-size: 1rem; }
+    .follow-btn:hover { background: #667eea; color: white; }
+    .follow-btn.following { background: #667eea; color: white; }
+    .action-buttons { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+    .contact-btn { padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-block; }
+    .contact-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+    @media (max-width: 768px) { .profile-top { flex-direction: column; align-items: center; text-align: center; } .profile-stats { justify-content: center; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="profileContent"></div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    const profileId = window.location.pathname.split('/').pop();
+    const token = localStorage.getItem('token');
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
+    async function loadProfile() {
+      try {
+        const response = await fetch(`${API_URL}/api/user/profile/${profileId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          displayProfile(data.user);
+        } else {
+          document.getElementById('profileContent').innerHTML = '<div class="card"><h2>Profile not found</h2></div>';
+        }
+      } catch (err) {
+        document.getElementById('profileContent').innerHTML = '<div class="card"><h2>Error loading profile</h2></div>';
+      }
+    }
+
+    function displayProfile(user) {
+      const isOwner = currentUser && currentUser.id === user._id;
+      const avatarLetter = (user.name || 'U').charAt(0).toUpperCase();
+
+      const html = `
+        <div class="profile-header">
+          <div class="profile-top">
+            <div class="profile-avatar">${avatarLetter}</div>
+            <div class="profile-info">
+              <h1 class="profile-name">${user.name}</h1>
+              ${user.tagline ? `<div class="profile-tagline">${user.tagline}</div>` : ''}
+              ${user.bio ? `<p class="profile-bio">${user.bio}</p>` : ''}
+              
+              <div class="profile-stats">
+                <div class="stat">
+                  <div class="stat-value">${user.followers?.length || 0}</div>
+                  <div class="stat-label">Followers</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${user.following?.length || 0}</div>
+                  <div class="stat-label">Following</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-value">${user.completedProjects || 0}</div>
+                  <div class="stat-label">Projects</div>
+                </div>
+                ${user.rating ? `
+                <div class="stat">
+                  <div class="stat-value">⭐ ${user.rating}</div>
+                  <div class="stat-label">Rating</div>
+                </div>` : ''}
+              </div>
+
+              ${user.availability ? `<span class="availability-badge ${user.availability}">${user.availability === 'available' ? '✓ Available' : user.availability === 'busy' ? '⏳ Busy' : '✗ Not Available'}</span>` : ''}
+
+              ${!isOwner && currentUser ? `
+                <div class="action-buttons">
+                  <button class="follow-btn" onclick="toggleFollow('${user._id}', this)">Follow</button>
+                  ${user.whatsapp ? `<a href="https://wa.me/${user.whatsapp}" class="contact-btn" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+
+        ${user.skills && user.skills.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-tools"></i> Skills</h2>
+          <div class="tags">
+            ${user.skills.map(skill => `<span class="tag">${skill}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${user.serviceCategories && user.serviceCategories.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-briefcase"></i> Services</h2>
+          <div class="tags">
+            ${user.serviceCategories.map(service => `<span class="tag">${service}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${user.experience && user.experience.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-briefcase"></i> Work Experience</h2>
+          ${user.experience.map(exp => `
+            <div class="experience-item">
+              <div class="item-title">${exp.title}</div>
+              ${exp.company ? `<div class="item-subtitle">${exp.company}</div>` : ''}
+              ${exp.duration ? `<div class="item-duration"><i class="far fa-clock"></i> ${exp.duration}</div>` : ''}
+              ${exp.description ? `<p class="item-description">${exp.description}</p>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${user.education && user.education.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-graduation-cap"></i> Education</h2>
+          ${user.education.map(edu => `
+            <div class="education-item">
+              <div class="item-title">${edu.degree}</div>
+              ${edu.institution ? `<div class="item-subtitle">${edu.institution}</div>` : ''}
+              ${edu.year ? `<div class="item-duration"><i class="far fa-calendar"></i> ${edu.year}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${user.certificates && user.certificates.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-certificate"></i> Certificates & Awards</h2>
+          ${user.certificates.map(cert => `
+            <div class="certificate-item">
+              <div class="item-title">${cert.name}</div>
+              ${cert.issuer ? `<div class="item-subtitle">${cert.issuer}</div>` : ''}
+              ${cert.year ? `<div class="item-duration"><i class="far fa-calendar"></i> ${cert.year}</div>` : ''}
+              ${cert.url ? `<a href="${cert.url}" target="_blank" style="color: #667eea;">View Certificate <i class="fas fa-external-link-alt"></i></a>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        ${user.languages && user.languages.length > 0 ? `
+        <div class="card">
+          <h2><i class="fas fa-language"></i> Languages</h2>
+          <div class="tags">
+            ${user.languages.map(lang => `<span class="tag">${lang}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        ${(user.socialLinks || user.website) ? `
+        <div class="card">
+          <h2><i class="fas fa-link"></i> Connect</h2>
+          <div class="social-links">
+            ${user.website ? `<a href="${user.website}" target="_blank" class="social-link"><i class="fas fa-globe"></i> Website</a>` : ''}
+            ${user.socialLinks?.instagram ? `<a href="${user.socialLinks.instagram}" target="_blank" class="social-link"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
+            ${user.socialLinks?.linkedin ? `<a href="${user.socialLinks.linkedin}" target="_blank" class="social-link"><i class="fab fa-linkedin"></i> LinkedIn</a>` : ''}
+          </div>
+        </div>
+        ` : ''}
+      `;
+
+      document.getElementById('profileContent').innerHTML = html;
+    }
+
+    async function toggleFollow(userId, button) {
+      try {
+        const response = await fetch(`${API_URL}/api/users/${userId}/follow`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.following) {
+            button.textContent = 'Following';
+            button.classList.add('following');
+          } else {
+            button.textContent = 'Follow';
+            button.classList.remove('following');
+          }
+        }
+      } catch (err) {
+        console.error('Follow error:', err);
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Your Profile - GigHub</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .skills-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .skills-input input {
+      flex: 1;
+    }
+
+    .add-btn {
+      padding: 12px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .add-btn:hover {
+      background: #764ba2;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag button {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .experience-item,
+    .certificate-item,
+    .education-item {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    .remove-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff4757;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-btn:hover {
+      background: #ff3838;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      margin-top: 20px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      padding: 12px 20px;
+      background: #f8f9fa;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .optional-badge {
+      font-size: 0.8rem;
+      color: #999;
+      font-weight: normal;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 Complete Your Creator Profile</h1>
+      <p>Showcase your skills, experience, and portfolio to attract clients</p>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <form id="profileForm" onsubmit="handleProfileSubmit(event)">
+      <!-- Basic Info -->
+      <div class="card">
+        <h2><i class="fas fa-user"></i> Basic Information</h2>
+        
+        <div class="form-group">
+          <label>Professional Tagline *</label>
+          <input type="text" id="tagline" placeholder="e.g., Expert Logo Designer & Brand Strategist" required>
+        </div>
+
+        <div class="form-group">
+          <label>Bio *</label>
+          <textarea id="bio" placeholder="Tell clients about yourself, your passion, and what makes you unique..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Years of Experience *</label>
+          <input type="number" id="yearsOfExperience" placeholder="e.g., 5" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <label>Hourly Rate (₹)</label>
+          <input type="text" id="hourlyRate" placeholder="e.g., ₹500-1000/hour">
+        </div>
+
+        <div class="form-group">
+          <label>Availability</label>
+          <select id="availability">
+            <option value="available">Available for Work</option>
+            <option value="busy">Busy (Can take limited projects)</option>
+            <option value="not-available">Not Available</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="card">
+        <h2><i class="fas fa-tools"></i> Skills</h2>
+        
+        <div class="form-group">
+          <label>Add Your Skills *</label>
+          <div class="skills-input">
+            <input type="text" id="skillInput" placeholder="e.g., Logo Design, Photoshop, Illustrator">
+            <button type="button" class="add-btn" onclick="addSkill()">Add</button>
+          </div>
+          <div id="skillsContainer" class="tags-container"></div>
+          <input type="hidden" id="skills" required>
+        </div>
+      </div>
+
+      <!-- Service Categories -->
+      <div class="card">
+        <h2><i class="fas fa-briefcase"></i> Service Categories</h2>
+        
+        <div class="form-group">
+          <label>What services do you offer? *</label>
+          <div class="skills-input">
+            <input type="text" id="serviceInput" placeholder="e.g., Poster Design, Video Editing, Web Development">
+            <button type="button" class="add-btn" onclick="addService()">Add</button>
+          </div>
+          <div id="servicesContainer" class="tags-container"></div>
+          <input type="hidden" id="serviceCategories" required>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="card">
+        <h2><i class="fas fa-briefcase"></i> Work Experience <span class="optional-badge">(Optional)</span></h2>
+        
+        <div id="experienceContainer"></div>
+        <button type="button" class="btn-secondary" onclick="addExperience()">
+          <i class="fas fa-plus"></i> Add Experience
+        </button>
+      </div>
+
+      <!-- Education -->
+      <div class="card">
+        <h2><i class="fas fa-graduation-cap"></i> Education <span class="optional-badge">(Optional)</span></h2>
+        
+        <div id="educationContainer"></div>
+        <button type="button" class="btn-secondary" onclick="addEducation()">
+          <i class="fas fa-plus"></i> Add Education
+        </button>
+      </div>
+
+      <!-- Certificates -->
+      <div class="card">
+        <h2><i class="fas fa-certificate"></i> Certificates & Awards <span class="optional-badge">(Optional)</span></h2>
+        
+        <div id="certificatesContainer"></div>
+        <button type="button" class="btn-secondary" onclick="addCertificate()">
+          <i class="fas fa-plus"></i> Add Certificate
+        </button>
+      </div>
+
+      <!-- Portfolio Links -->
+      <div class="card">
+        <h2><i class="fas fa-link"></i> Portfolio & Social Links <span class="optional-badge">(Optional)</span></h2>
+        
+        <div class="form-group">
+          <label>Portfolio Links</label>
+          <div class="skills-input">
+            <input type="text" id="portfolioInput" placeholder="e.g., https://behance.net/yourprofile">
+            <button type="button" class="add-btn" onclick="addPortfolioLink()">Add</button>
+          </div>
+          <div id="portfolioContainer" class="tags-container"></div>
+          <input type="hidden" id="portfolioLinks">
+        </div>
+
+        <div class="form-group">
+          <label>Website</label>
+          <input type="url" id="website" placeholder="https://yourwebsite.com">
+        </div>
+
+        <div class="form-group">
+          <label>Instagram</label>
+          <input type="url" id="instagram" placeholder="https://instagram.com/yourprofile">
+        </div>
+
+        <div class="form-group">
+          <label>LinkedIn</label>
+          <input type="url" id="linkedin" placeholder="https://linkedin.com/in/yourprofile">
+        </div>
+      </div>
+
+      <!-- Languages -->
+      <div class="card">
+        <h2><i class="fas fa-language"></i> Languages <span class="optional-badge">(Optional)</span></h2>
+        
+        <div class="form-group">
+          <label>Languages You Speak</label>
+          <div class="skills-input">
+            <input type="text" id="languageInput" placeholder="e.g., English, Hindi, Spanish">
+            <button type="button" class="add-btn" onclick="addLanguage()">Add</button>
+          </div>
+          <div id="languagesContainer" class="tags-container"></div>
+          <input type="hidden" id="languages">
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary">
+        <i class="fas fa-check-circle"></i> Complete Profile & Continue
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    let skills = [];
+    let services = [];
+    let portfolioLinks = [];
+    let languages = [];
+    let experiences = [];
+    let educations = [];
+    let certificates = [];
+
+    // Check authentication
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    if (!token || !user || user.role !== 'creator') {
+      window.location.href = '/login';
+    }
+
+    function showAlert(message, type = 'error') {
+      const alertContainer = document.getElementById('alertContainer');
+      alertContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+      setTimeout(() => {
+        alertContainer.innerHTML = '';
+      }, 5000);
+    }
+
+    // Skills
+    function addSkill() {
+      const input = document.getElementById('skillInput');
+      const skill = input.value.trim();
+      if (skill && !skills.includes(skill)) {
+        skills.push(skill);
+        input.value = '';
+        updateSkillsDisplay();
+      }
+    }
+
+    function removeSkill(index) {
+      skills.splice(index, 1);
+      updateSkillsDisplay();
+    }
+
+    function updateSkillsDisplay() {
+      const container = document.getElementById('skillsContainer');
+      container.innerHTML = skills.map((skill, i) => `
+        <div class="tag">
+          ${skill}
+          <button type="button" onclick="removeSkill(${i})">&times;</button>
+        </div>
+      `).join('');
+      document.getElementById('skills').value = skills.join(',');
+    }
+
+    // Services
+    function addService() {
+      const input = document.getElementById('serviceInput');
+      const service = input.value.trim();
+      if (service && !services.includes(service)) {
+        services.push(service);
+        input.value = '';
+        updateServicesDisplay();
+      }
+    }
+
+    function removeService(index) {
+      services.splice(index, 1);
+      updateServicesDisplay();
+    }
+
+    function updateServicesDisplay() {
+      const container = document.getElementById('servicesContainer');
+      container.innerHTML = services.map((service, i) => `
+        <div class="tag">
+          ${service}
+          <button type="button" onclick="removeService(${i})">&times;</button>
+        </div>
+      `).join('');
+      document.getElementById('serviceCategories').value = services.join(',');
+    }
+
+    // Portfolio Links
+    function addPortfolioLink() {
+      const input = document.getElementById('portfolioInput');
+      const link = input.value.trim();
+      if (link && !portfolioLinks.includes(link)) {
+        portfolioLinks.push(link);
+        input.value = '';
+        updatePortfolioDisplay();
+      }
+    }
+
+    function removePortfolioLink(index) {
+      portfolioLinks.splice(index, 1);
+      updatePortfolioDisplay();
+    }
+
+    function updatePortfolioDisplay() {
+      const container = document.getElementById('portfolioContainer');
+      container.innerHTML = portfolioLinks.map((link, i) => `
+        <div class="tag">
+          ${link.substring(0, 30)}...
+          <button type="button" onclick="removePortfolioLink(${i})">&times;</button>
+        </div>
+      `).join('');
+      document.getElementById('portfolioLinks').value = portfolioLinks.join(',');
+    }
+
+    // Languages
+    function addLanguage() {
+      const input = document.getElementById('languageInput');
+      const lang = input.value.trim();
+      if (lang && !languages.includes(lang)) {
+        languages.push(lang);
+        input.value = '';
+        updateLanguagesDisplay();
+      }
+    }
+
+    function removeLanguage(index) {
+      languages.splice(index, 1);
+      updateLanguagesDisplay();
+    }
+
+    function updateLanguagesDisplay() {
+      const container = document.getElementById('languagesContainer');
+      container.innerHTML = languages.map((lang, i) => `
+        <div class="tag">
+          ${lang}
+          <button type="button" onclick="removeLanguage(${i})">&times;</button>
+        </div>
+      `).join('');
+      document.getElementById('languages').value = languages.join(',');
+    }
+
+    // Experience
+    function addExperience() {
+      const index = experiences.length;
+      experiences.push({});
+      const container = document.getElementById('experienceContainer');
+      container.innerHTML += `
+        <div class="experience-item" id="exp-${index}">
+          <button type="button" class="remove-btn" onclick="removeExperience(${index})">&times;</button>
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="exp-title-${index}" placeholder="e.g., Senior Graphic Designer">
+          </div>
+          <div class="form-group">
+            <label>Company/Organization</label>
+            <input type="text" id="exp-company-${index}" placeholder="e.g., ABC Design Studio">
+          </div>
+          <div class="form-group">
+            <label>Duration</label>
+            <input type="text" id="exp-duration-${index}" placeholder="e.g., 2020 - Present">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="exp-desc-${index}" placeholder="Describe your role and achievements..."></textarea>
+          </div>
+        </div>
+      `;
+    }
+
+    function removeExperience(index) {
+      experiences.splice(index, 1);
+      document.getElementById(`exp-${index}`).remove();
+    }
+
+    // Education
+    function addEducation() {
+      const index = educations.length;
+      educations.push({});
+      const container = document.getElementById('educationContainer');
+      container.innerHTML += `
+        <div class="education-item" id="edu-${index}">
+          <button type="button" class="remove-btn" onclick="removeEducation(${index})">&times;</button>
+          <div class="form-group">
+            <label>Degree/Certificate</label>
+            <input type="text" id="edu-degree-${index}" placeholder="e.g., B.Des in Graphic Design">
+          </div>
+          <div class="form-group">
+            <label>Institution</label>
+            <input type="text" id="edu-institution-${index}" placeholder="e.g., National Institute of Design">
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <input type="text" id="edu-year-${index}" placeholder="e.g., 2019">
+          </div>
+        </div>
+      `;
+    }
+
+    function removeEducation(index) {
+      educations.splice(index, 1);
+      document.getElementById(`edu-${index}`).remove();
+    }
+
+    // Certificates
+    function addCertificate() {
+      const index = certificates.length;
+      certificates.push({});
+      const container = document.getElementById('certificatesContainer');
+      container.innerHTML += `
+        <div class="certificate-item" id="cert-${index}">
+          <button type="button" class="remove-btn" onclick="removeCertificate(${index})">&times;</button>
+          <div class="form-group">
+            <label>Certificate/Award Name</label>
+            <input type="text" id="cert-name-${index}" placeholder="e.g., Adobe Certified Expert">
+          </div>
+          <div class="form-group">
+            <label>Issued By</label>
+            <input type="text" id="cert-issuer-${index}" placeholder="e.g., Adobe Inc.">
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <input type="text" id="cert-year-${index}" placeholder="e.g., 2021">
+          </div>
+          <div class="form-group">
+            <label>Certificate URL <span class="optional-badge">(Optional)</span></label>
+            <input type="url" id="cert-url-${index}" placeholder="https://certification-url.com">
+          </div>
+        </div>
+      `;
+    }
+
+    function removeCertificate(index) {
+      certificates.splice(index, 1);
+      document.getElementById(`cert-${index}`).remove();
+    }
+
+    // Form Submit
+    async function handleProfileSubmit(e) {
+      e.preventDefault();
+
+      // Collect experience data
+      experiences = experiences.map((_, i) => ({
+        title: document.getElementById(`exp-title-${i}`)?.value || '',
+        company: document.getElementById(`exp-company-${i}`)?.value || '',
+        duration: document.getElementById(`exp-duration-${i}`)?.value || '',
+        description: document.getElementById(`exp-desc-${i}`)?.value || ''
+      })).filter(exp => exp.title);
+
+      // Collect education data
+      educations = educations.map((_, i) => ({
+        degree: document.getElementById(`edu-degree-${i}`)?.value || '',
+        institution: document.getElementById(`edu-institution-${i}`)?.value || '',
+        year: document.getElementById(`edu-year-${i}`)?.value || ''
+      })).filter(edu => edu.degree);
+
+      // Collect certificates data
+      certificates = certificates.map((_, i) => ({
+        name: document.getElementById(`cert-name-${i}`)?.value || '',
+        issuer: document.getElementById(`cert-issuer-${i}`)?.value || '',
+        year: document.getElementById(`cert-year-${i}`)?.value || '',
+        url: document.getElementById(`cert-url-${i}`)?.value || ''
+      })).filter(cert => cert.name);
+
+      const profileData = {
+        tagline: document.getElementById('tagline').value.trim(),
+        bio: document.getElementById('bio').value.trim(),
+        yearsOfExperience: parseInt(document.getElementById('yearsOfExperience').value),
+        hourlyRate: document.getElementById('hourlyRate').value.trim(),
+        availability: document.getElementById('availability').value,
+        skills,
+        serviceCategories: services,
+        experience: experiences,
+        education: educations,
+        certificates,
+        portfolioLinks,
+        website: document.getElementById('website').value.trim(),
+        languages,
+        socialLinks: {
+          instagram: document.getElementById('instagram').value.trim(),
+          linkedin: document.getElementById('linkedin').value.trim()
+        },
+        profileCompleted: true
+      };
+
+      try {
+        const response = await fetch(`${API_URL}/api/users/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(profileData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showAlert('Profile completed successfully!', 'success');
+          localStorage.setItem('user', JSON.stringify(data.user));
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 1500);
+        } else {
+          showAlert(data.error || 'Failed to update profile');
+        }
+      } catch (err) {
+        showAlert('Network error. Please try again.');
+      }
+    }
+
+    // Allow Enter key to add items
+    document.getElementById('skillInput')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill();
+      }
+    });
+
+    document.getElementById('serviceInput')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addService();
+      }
+    });
+  </script>
+</body>
+</html>

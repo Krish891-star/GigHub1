@@ -1,3 +1,8 @@
 ﻿node_modules/
 uploads/
 .env
+app-old.js
+public/index-old.html
+public/script-old.js
+*.log
+.DS_Store

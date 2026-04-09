@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GigHub - Dashboard</title>
+  <title>GigHub - Freelance Marketplace</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * {
       margin: 0;
@@ -11,483 +12,563 @@
       box-sizing: border-box;
     }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
-      min-height: 100vh;
-      color: #2d3748;
+    :root {
+      --ig-primary: #405DE6;
+      --ig-secondary: #5851DB;
+      --ig-gradient: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --text-primary: #262626;
+      --text-secondary: #8e8e8e;
+      --border-color: #dbdbdb;
     }
 
-    /* Animated gradient background */
-    body::before {
-      content: '';
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      padding-bottom: 60px;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Instagram-style Top Navbar */
+    .top-nav {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
-      background-size: 400% 400%;
-      animation: gradient 15s ease infinite;
-      opacity: 0.05;
-      z-index: -1;
-    }
-
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    /* Modern Navbar */
-    .navbar {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(20px);
-      padding: 1.25rem 2rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      right: 0;
+      height: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
+      padding: 0 20px;
       z-index: 1000;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
 
-    .navbar .logo {
-      font-size: 1.75rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .nav-logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--ig-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      letter-spacing: -0.5px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.2s;
     }
 
-    .navbar .nav-links {
+    .nav-logo:hover {
+      transform: scale(1.05);
+    }
+
+    .nav-icons {
       display: flex;
-      gap: 0.75rem;
+      gap: 20px;
       align-items: center;
     }
 
-    .navbar .nav-links span {
-      font-weight: 600;
-      color: #667eea;
-      padding: 0.5rem 1rem;
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-      border-radius: 20px;
-      font-size: 0.9rem;
-    }
-
-    .navbar .nav-links a, .navbar .nav-links button {
-      color: #4a5568;
-      text-decoration: none;
-      padding: 0.6rem 1.25rem;
-      border-radius: 10px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      background: transparent;
-      border: none;
+    .nav-icon {
+      font-size: 1.4rem;
       cursor: pointer;
-      font-size: 0.9rem;
-      font-weight: 600;
+      color: var(--text-primary);
+      transition: transform 0.2s;
       position: relative;
-      overflow: hidden;
+      user-select: none;
     }
 
-    .navbar .nav-links a::before, .navbar .nav-links button::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
+    .nav-icon:hover {
+      transform: scale(1.15);
+    }
+
+    .nav-icon:active {
+      transform: scale(0.95);
+    }
+
+    .nav-icon.active {
+      background: var(--ig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Stories Bar */
+    .stories-bar {
+      margin-top: 60px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .stories-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .stories-container {
+      display: flex;
+      gap: 15px;
+      padding: 0 20px;
+      width: max-content;
+    }
+
+    .story-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .story-avatar {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: var(--ig-gradient);
+      padding: 3px;
+      margin-bottom: 6px;
+    }
+
+    .story-avatar img,
+    .story-avatar .avatar-placeholder {
       width: 100%;
       height: 100%;
+      border-radius: 50%;
+      border: 3px solid var(--bg-secondary);
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      transition: left 0.3s ease;
-      z-index: -1;
-    }
-
-    .navbar .nav-links a:hover::before, .navbar .nav-links button:hover::before {
-      left: 0;
-    }
-
-    .navbar .nav-links a:hover, .navbar .nav-links button:hover {
       color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      font-weight: 700;
+      font-size: 1.5rem;
     }
 
-    .container {
-      max-width: 1400px;
-      margin: 2rem auto;
-      padding: 0 2rem;
-    }
-
-    /* Modern Dashboard Stats */
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
-    }
-
-    .stat-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      text-align: center;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
+    .story-username {
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      max-width: 70px;
       overflow: hidden;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      text-overflow: ellipsis;
     }
 
-    .stat-card::before {
-      content: '';
+    /* Main Feed */
+    .feed-container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 0 20px;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Instagram-style Post Card */
+    .post-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .post-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .post-user-info {
+      flex: 1;
+    }
+
+    .post-username {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .post-category {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .post-image {
+      width: 100%;
+      max-height: 600px;
+      object-fit: cover;
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 14px;
+    }
+
+    .post-actions-left {
+      display: flex;
+      gap: 16px;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: transform 0.2s;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .action-btn.liked {
+      color: #ed4956;
+    }
+
+    .post-likes {
+      padding: 0 14px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+
+    .post-caption {
+      padding: 0 14px;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .post-caption strong {
+      margin-right: 6px;
+    }
+
+    .post-budget {
+      padding: 0 14px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: var(--ig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .post-comments {
+      padding: 0 14px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .post-time {
+      padding: 0 14px 14px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .post-contact {
+      padding: 14px;
+      border-top: 1px solid var(--border-color);
+      background: #fafafa;
+    }
+
+    .contact-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: var(--ig-gradient);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Bottom Navigation (Mobile) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: transform 0.2s;
+      user-select: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .bottom-nav-item:hover {
+      transform: scale(1.1);
+      background: rgba(64, 93, 230, 0.1);
+    }
+
+    .bottom-nav-item:active {
+      transform: scale(0.9);
+    }
+
+    .bottom-nav-item.active {
+      background: var(--ig-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .bottom-nav-item i {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+
+    .bottom-nav-item span {
+      font-size: 0.7rem;
+    }
+
+    /* Sections */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Explore Grid */
+    .explore-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 20px;
+    }
+
+    .explore-item {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .explore-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .explore-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .explore-overlay {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 4px;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-      transform: scaleX(0);
-      transition: transform 0.4s ease;
-    }
-
-    .stat-card:hover::before {
-      transform: scaleX(1);
-    }
-
-    .stat-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
-    }
-
-    .stat-card .stat-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .stat-card h3 {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-size: 3rem;
-      margin-bottom: 0.75rem;
-      font-weight: 800;
-    }
-
-    .stat-card p {
-      color: #718096;
-      font-size: 1rem;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      color: white;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
     }
 
-    /* Modern Cards */
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 2.5rem;
-      margin-bottom: 2.5rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+    .explore-item:hover .explore-overlay {
+      opacity: 1;
     }
 
-    .card h2 {
-      margin-bottom: 2rem;
+    /* Profile Section */
+    .profile-header {
+      background: var(--bg-secondary);
+      padding: 30px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-size: 2rem;
-      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 3rem;
+      font-weight: 700;
+    }
+
+    .profile-stats {
+      flex: 1;
+    }
+
+    .profile-username {
+      font-size: 1.3rem;
+      font-weight: 300;
+      margin-bottom: 10px;
+    }
+
+    .profile-stats-row {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 10px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .profile-bio {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .profile-name {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .profile-bio-text {
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    /* Forms */
+    .form-container {
+      max-width: 600px;
+      margin: 80px auto 20px;
+      background: var(--bg-secondary);
+      padding: 30px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
     }
 
     .form-group {
-      margin-bottom: 1.75rem;
+      margin-bottom: 20px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 0.75rem;
-      font-weight: 700;
-      color: #2d3748;
-      font-size: 0.95rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
     }
 
     .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 0.9rem 1.25rem;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: #f7fafc;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fafafa;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
       outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
+      border-color: #a8a8a8;
     }
 
-    .form-group input::placeholder,
-    .form-group textarea::placeholder {
-      color: #a0aec0;
-    }
-
-    .btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 1rem 2.5rem;
-      border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      font-weight: 700;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      user-select: none;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
+    .btn-primary {
       width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: left 0.5s ease;
+      padding: 12px;
+      background: var(--ig-gradient);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
     }
 
-    .btn:hover::before {
-      left: 100%;
+    .btn-primary:hover {
+      opacity: 0.9;
     }
 
-    .btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-    }
-
-    .btn:active {
-      transform: translateY(-1px);
-    }
-
-    .btn:disabled {
+    .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
 
-    .btn-secondary {
-      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-      box-shadow: 0 4px 15px rgba(74, 85, 104, 0.4);
-    }
-
-    .btn-secondary:hover {
-      box-shadow: 0 8px 25px rgba(74, 85, 104, 0.5);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-      box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
-    }
-
-    .btn-danger:hover {
-      box-shadow: 0 8px 25px rgba(245, 101, 101, 0.5);
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
-    }
-
-    .btn-success:hover {
-      box-shadow: 0 8px 25px rgba(72, 187, 120, 0.5);
-    }
-
-    /* Modern Post Cards */
-    .posts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 2rem;
-    }
-
-    .post-card {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-
-    .post-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
-    }
-
-    .post-header {
-      padding: 1.5rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      position: relative;
-    }
-
-    .post-header::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 20px;
-      background: white;
-      border-radius: 20px 20px 0 0;
-    }
-
-    .post-header h3 {
-      margin-bottom: 0.75rem;
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
-
-    .post-category {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.25);
-      padding: 0.4rem 1rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      backdrop-filter: blur(10px);
-    }
-
-    .post-body {
-      padding: 2rem 1.5rem 1.5rem;
-    }
-
-    .post-body p {
-      margin-bottom: 1.25rem;
-      color: #4a5568;
-      line-height: 1.7;
-      font-size: 0.95rem;
-    }
-
-    .post-budget {
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1.25rem;
-    }
-
-    .post-footer {
-      padding: 1.25rem 1.5rem;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #f7fafc;
-    }
-
-    .post-date {
-      font-size: 0.85rem;
-      color: #718096;
-      font-weight: 600;
-    }
-
-    .status-badge {
-      padding: 0.4rem 1rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .status-open { 
-      background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%); 
-      color: #22543d; 
-    }
-    .status-in-progress { 
-      background: linear-gradient(135deg, #fefcbf 0%, #faf089 100%); 
-      color: #744210; 
-    }
-    .status-completed { 
-      background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%); 
-      color: #2a4365; 
-    }
-    .status-closed { 
-      background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%); 
-      color: #742a2a; 
-    }
-
-    /* Modern Tabs */
-    .tabs {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 2.5rem;
-      flex-wrap: wrap;
-      padding: 0.5rem;
-      background: #f7fafc;
-      border-radius: 16px;
-    }
-
-    .tab {
-      padding: 0.85rem 1.75rem;
-      background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      font-weight: 700;
-      color: #4a5568;
-      font-size: 0.9rem;
-    }
-
-    .tab:hover {
-      border-color: #667eea;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-    }
-
-    .tab.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    /* Modern Alerts */
+    /* Alert Messages */
     .alert {
-      padding: 1.25rem 1.5rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
       font-weight: 600;
-      animation: slideIn 0.4s ease;
+      animation: slideIn 0.3s ease;
     }
 
     @keyframes slideIn {
@@ -502,445 +583,363 @@
     }
 
     .alert-success {
-      background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
-      color: #22543d;
-      border: 1px solid #9ae6b4;
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
 
     .alert-error {
-      background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
-      color: #742a2a;
-      border: 1px solid #feb2b2;
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
     }
 
-    .contact-info {
-      margin-top: 1.25rem;
-      padding: 1.25rem;
-      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
+    /* Dark Mode Styles */
+    body.dark-mode {
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --text-primary: #e0e0e0;
+      --text-secondary: #a0a0a0;
+      --border-color: #333333;
     }
 
-    .contact-info p {
-      margin-bottom: 0.5rem;
-      color: #4a5568;
+    body.dark-mode .top-nav {
+      background: #1e1e1e;
+      border-bottom-color: #333;
     }
 
-    .contact-info a {
-      color: #667eea;
-      text-decoration: none;
-      font-weight: 700;
-      transition: all 0.3s ease;
+    body.dark-mode .stories-bar {
+      background: #1e1e1e;
+      border-bottom-color: #333;
     }
 
-    .contact-info a:hover {
-      color: #764ba2;
-      text-decoration: underline;
+    body.dark-mode .post-card {
+      background: #1e1e1e;
+      border-color: #333;
     }
 
-    .image-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 0.75rem;
-      margin-top: 1.25rem;
+    body.dark-mode .post-contact {
+      background: #2a2a2a;
+      border-top-color: #333;
     }
 
-    .image-gallery img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 12px;
-      transition: transform 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    body.dark-mode .form-container {
+      background: #1e1e1e;
+      border-color: #333;
     }
 
-    .image-gallery img:hover {
-      transform: scale(1.05);
+    body.dark-mode .form-group input,
+    body.dark-mode .form-group textarea,
+    body.dark-mode .form-group select {
+      background: #2a2a2a;
+      border-color: #333;
+      color: #e0e0e0;
     }
 
-    @media (max-width: 1024px) {
-      .container {
-        max-width: 100%;
-        padding: 0 1.5rem;
-      }
-
-      .posts-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      }
+    body.dark-mode .form-group input:focus,
+    body.dark-mode .form-group textarea:focus,
+    body.dark-mode .form-group select:focus {
+      border-color: #555;
     }
 
-    @media (max-width: 768px) {
-      .navbar {
-        flex-direction: column;
-        gap: 0.75rem;
-        padding: 1rem;
-        position: relative;
-      }
-
-      .navbar .logo {
-        font-size: 1.5rem;
-        width: 100%;
-        text-align: center;
-      }
-
-      .navbar .nav-links {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem;
-        width: 100%;
-      }
-
-      .navbar .nav-links span {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 0.5rem;
-      }
-
-      .navbar .nav-links button {
-        flex: 1;
-        min-width: calc(50% - 0.5rem);
-        padding: 0.75rem;
-        font-size: 0.85rem;
-        text-align: center;
-      }
-
-      .posts-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-
-      .dashboard {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-      }
-
-      .container {
-        padding: 0 1rem;
-        margin: 1rem auto;
-      }
-
-      .card {
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .card h2 {
-        font-size: 1.5rem;
-        margin-bottom: 1.25rem;
-      }
-
-      .tabs {
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        padding: 0.4rem;
-      }
-
-      .tab {
-        padding: 0.65rem 1rem;
-        font-size: 0.8rem;
-        flex: 1;
-        min-width: calc(50% - 0.5rem);
-        text-align: center;
-      }
-
-      .stat-card {
-        padding: 1.5rem;
-      }
-
-      .stat-card h3 {
-        font-size: 2.5rem;
-      }
-
-      .stat-card .stat-icon {
-        font-size: 2.5rem;
-      }
-
-      .post-header h3 {
-        font-size: 1.2rem;
-      }
-
-      .post-budget {
-        font-size: 1.25rem;
-      }
-
-      .video-container {
-        max-width: 100%;
-      }
-
-      .video-container video {
-        max-height: 500px;
-      }
-
-      .video-action-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.25rem;
-      }
-
-      .form-group input,
-      .form-group textarea,
-      .form-group select {
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-      }
-
-      .btn {
-        padding: 0.85rem 1.5rem;
-        font-size: 0.95rem;
-        width: 100%;
-      }
-
-      .creator-header {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .skills-list {
-        justify-content: center;
-      }
-
-      .image-gallery {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 0.5rem;
-      }
-
-      .image-gallery img {
-        height: 120px;
-      }
+    body.dark-mode .action-btn {
+      color: #e0e0e0;
     }
 
-    @media (max-width: 480px) {
-      .navbar {
-        padding: 0.75rem;
-      }
-
-      .navbar .logo {
-        font-size: 1.25rem;
-      }
-
-      .navbar .nav-links button {
-        min-width: 100%;
-        font-size: 0.8rem;
-        padding: 0.65rem;
-      }
-
-      .container {
-        padding: 0 0.75rem;
-      }
-
-      .card {
-        padding: 1rem;
-        border-radius: 16px;
-      }
-
-      .card h2 {
-        font-size: 1.25rem;
-      }
-
-      .stat-card {
-        padding: 1.25rem;
-      }
-
-      .stat-card h3 {
-        font-size: 2rem;
-      }
-
-      .stat-card p {
-        font-size: 0.85rem;
-      }
-
-      .tab {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-        min-width: calc(50% - 0.25rem);
-      }
-
-      .post-header {
-        padding: 1rem;
-      }
-
-      .post-header h3 {
-        font-size: 1.1rem;
-      }
-
-      .post-body {
-        padding: 1.25rem 1rem 1rem;
-      }
-
-      .post-budget {
-        font-size: 1.1rem;
-      }
-
-      .post-footer {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-      }
-
-      .video-container video {
-        max-height: 400px;
-      }
-
-      .video-actions {
-        right: 0.5rem;
-        bottom: 0.5rem;
-        gap: 0.75rem;
-      }
-
-      .video-action-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
-      }
-
-      .form-group label {
-        font-size: 0.85rem;
-      }
-
-      .form-group input,
-      .form-group textarea,
-      .form-group select {
-        padding: 0.65rem 0.85rem;
-        font-size: 0.9rem;
-      }
-
-      .btn {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.9rem;
-      }
-
-      .creator-card {
-        padding: 1.25rem;
-      }
-
-      .creator-avatar {
-        width: 60px;
-        height: 60px;
-        font-size: 1.5rem;
-      }
-
-      .image-gallery {
-        grid-template-columns: 1fr;
-      }
-
-      .image-gallery img {
-        height: 200px;
-      }
-
-      .comment-item {
-        padding: 0.65rem;
-      }
-
-      .comment-item p {
-        font-size: 0.85rem;
-      }
+    body.dark-mode .bottom-nav {
+      background: #1e1e1e;
+      border-top-color: #333;
     }
 
-    @media (max-width: 360px) {
-      .navbar .nav-links button {
-        font-size: 0.75rem;
-        padding: 0.6rem;
-      }
-
-      .tab {
-        font-size: 0.7rem;
-        padding: 0.5rem 0.65rem;
-      }
-
-      .card {
-        padding: 0.85rem;
-      }
-
-      .stat-card h3 {
-        font-size: 1.75rem;
-      }
+    body.dark-mode .modal-content {
+      background: #1e1e1e;
     }
 
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #667eea;
-      font-size: 1.2rem;
-      font-weight: 600;
+    body.dark-mode .alert-success {
+      background: #1b4332;
+      color: #95d5b2;
+      border-color: #2d6a4f;
     }
 
-    /* Creator Cards */
-    .creator-card {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+    body.dark-mode .alert-error {
+      background: #5c1a1a;
+      color: #f5a3a3;
+      border-color: #8b2f2f;
     }
 
-    .creator-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
+    /* Bookmark Button */
+    .action-btn.bookmarked {
+      color: #405DE6;
     }
 
-    .creator-header {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .creator-avatar {
-      width: 70px;
-      height: 70px;
+    /* Notification Badge */
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #E1306C;
+      color: white;
       border-radius: 50%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      width: 18px;
+      height: 18px;
+      font-size: 0.65rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 1.75rem;
-      font-weight: 800;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      border: 2px solid white;
     }
 
-    .creator-info h3 {
-      color: #2d3748;
-      margin-bottom: 0.35rem;
-      font-size: 1.25rem;
-      font-weight: 700;
+    body.dark-mode .notification-badge {
+      border-color: #1e1e1e;
     }
 
-    .creator-info p {
-      color: #718096;
-      font-size: 0.9rem;
-      font-weight: 600;
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
     }
 
-    .skills-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1.25rem;
+    .modal-content {
+      background: var(--bg-secondary);
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
 
-    .skill-tag {
-      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      color: #667eea;
-      font-weight: 600;
-      border: 1px solid rgba(102, 126, 234, 0.2);
+    body.dark-mode .modal-content {
+      background: #1e1e1e;
     }
 
-    /* Status & Shorts Specific Styles */
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+
+    /* Desktop Responsive */
+    @media (min-width: 768px) {
+      .bottom-nav {
+        display: none;
+      }
+
+      body {
+        padding-bottom: 20px;
+      }
+      
+      .feed-container {
+        max-width: 600px;
+      }
+    }
+    
+    /* Tablet Responsive */
+    @media (max-width: 1024px) and (min-width: 768px) {
+      .feed-container {
+        max-width: 90%;
+      }
+      
+      .explore-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 767px) {
+      .feed-container {
+        padding: 0;
+        margin: 10px auto;
+        width: 100%;
+        overflow-x: hidden;
+      }
+
+      .post-card {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        margin-bottom: 10px;
+      }
+
+      .form-container {
+        margin: 70px 10px 20px;
+        padding: 20px;
+        width: calc(100% - 20px);
+      }
+
+      .profile-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+      }
+
+      .profile-stats-row {
+        justify-content: center;
+      }
+      
+      .stories-bar {
+        padding: 12px 0;
+      }
+      
+      .stories-container {
+        padding: 0 10px;
+        gap: 10px;
+      }
+      
+      .story-avatar {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .top-nav {
+        padding: 0 10px;
+      }
+      
+      .nav-logo {
+        font-size: 1.3rem;
+      }
+      
+      .nav-icons {
+        gap: 15px;
+      }
+      
+      .nav-icon {
+        font-size: 1.2rem;
+      }
+      
+      .explore-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        padding: 10px;
+      }
+      
+      .video-container video {
+        max-height: 500px;
+      }
+    }
+    
+    /* Small Mobile */
+    @media (max-width: 480px) {
+      .nav-icons {
+        gap: 12px;
+      }
+      
+      .nav-icon {
+        font-size: 1.1rem;
+      }
+      
+      .story-avatar {
+        width: 56px;
+        height: 56px;
+      }
+      
+      .story-username {
+        font-size: 0.7rem;
+        max-width: 60px;
+      }
+      
+      .post-header {
+        padding: 10px 12px;
+      }
+      
+      .post-actions {
+        padding: 10px 12px;
+      }
+      
+      .post-likes,
+      .post-caption,
+      .post-budget,
+      .post-comments,
+      .post-time {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      
+      .form-container {
+        padding: 15px;
+        margin: 70px 5px 20px;
+        width: calc(100% - 10px);
+      }
+      
+      .form-group label {
+        font-size: 0.85rem;
+      }
+      
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+      }
+      
+      .btn-primary {
+        padding: 10px;
+        font-size: 0.9rem;
+      }
+      
+      .video-action-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+      }
+      
+      .video-actions {
+        right: 8px;
+        bottom: 70px;
+        gap: 12px;
+      }
+    }
+    
+    /* Extra Small Mobile */
+    @media (max-width: 360px) {
+      .nav-icons {
+        gap: 10px;
+      }
+      
+      .nav-icon {
+        font-size: 1rem;
+      }
+      
+      .story-avatar {
+        width: 50px;
+        height: 50px;
+      }
+      
+      .bottom-nav {
+        height: 55px;
+      }
+      
+      .bottom-nav-item i {
+        font-size: 1.3rem;
+      }
+      
+      .bottom-nav-item span {
+        font-size: 0.65rem;
+      }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Status/Shorts Video Styles */
     .video-container {
       position: relative;
       width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      border-radius: 12px;
-      overflow: hidden;
       background: #000;
-      touch-action: manipulation;
+      border-radius: 8px;
+      overflow: hidden;
     }
 
     .video-container video {
@@ -948,7 +947,6 @@
       max-height: 600px;
       object-fit: contain;
       display: block;
-      touch-action: manipulation;
     }
 
     .video-overlay {
@@ -956,18 +954,18 @@
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 2rem 1rem 1rem;
+      padding: 60px 16px 16px;
       background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
       color: white;
     }
 
     .video-actions {
       position: absolute;
-      right: 1rem;
-      bottom: 1rem;
+      right: 12px;
+      bottom: 80px;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 16px;
       z-index: 10;
     }
 
@@ -975,22 +973,16 @@
       background: rgba(255, 255, 255, 0.2);
       border: none;
       border-radius: 50%;
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
       color: white;
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       backdrop-filter: blur(10px);
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    .video-action-btn:active {
-      transform: scale(0.95);
     }
 
     .video-action-btn:hover {
@@ -999,50 +991,17 @@
     }
 
     .video-action-btn.liked {
-      background: #e74c3c;
+      color: #ed4956;
     }
 
-    .comments-section {
-      margin-top: 1rem;
-      padding: 1rem;
-      background: #f7fafc;
-      border-radius: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .comment-item {
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-    }
-
-    .comment-item strong {
-      color: #667eea;
-      font-weight: 700;
-    }
-
-    .comment-item p {
-      margin-top: 0.25rem;
-      color: #4a5568;
-      font-size: 0.9rem;
-    }
-
-    .comment-item small {
-      color: #a0aec0;
-      font-size: 0.75rem;
-    }
-
-    .status-badge-type {
+    .type-badge {
       display: inline-block;
-      padding: 0.35rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
-      margin-left: 0.5rem;
+      margin-left: 8px;
     }
 
     .badge-status {
@@ -1054,165 +1013,307 @@
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       color: white;
     }
+
+    .comments-section {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fafafa;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .comment-item {
+      padding: 8px;
+      margin-bottom: 6px;
+      background: white;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .comment-item strong {
+      color: var(--ig-primary);
+      margin-right: 6px;
+    }
+
+    .comment-item p {
+      margin-top: 4px;
+      font-size: 0.9rem;
+    }
+
+    .comment-item small {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    /* Follow Button Styles */
+    .follow-btn {
+      padding: 8px 24px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-left: 12px;
+    }
+
+    .follow-btn:hover {
+      background: var(--bg-primary);
+      transform: scale(1.05);
+    }
+
+    .follow-btn.following {
+      background: var(--ig-gradient);
+      color: white;
+      border-color: transparent;
+    }
+
+    .profile-action-btns {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
-  <div class="navbar">
-    <div class="logo">🚀 GigHub</div>
-    <div class="nav-links">
-      <span id="userName"></span>
-      <button onclick="showDashboard()">📊 Dashboard</button>
-      <button id="createPostBtn" onclick="showCreatePost()">➕ Create Post</button>
-      <button id="viewPostsBtn" onclick="showAllPosts()">🔍 Browse Posts</button>
-      <button onclick="showStatusShorts()">📸 Feed</button>
-      <button onclick="showStatusShortsUpload()">⬆️ Upload</button>
-      <button id="viewCreatorsBtn" onclick="showCreators()">🎨 Creators</button>
-      <button onclick="logout()">🚪 Logout</button>
+  <!-- Top Navigation -->
+  <div class="top-nav">
+    <div class="nav-logo" onclick="showSection('feed')">GigHub</div>
+    <div class="nav-icons">
+      <i class="fas fa-home nav-icon active" onclick="showSection('feed')" title="Home"></i>
+      <i class="fas fa-search nav-icon" onclick="showSection('explore')" title="Explore"></i>
+      <i class="fas fa-play-circle nav-icon" onclick="showSection('reels')" title="Reels"></i>
+      <i class="fas fa-plus-circle nav-icon" onclick="showSection('create')" title="Create Post"></i>
+      <i class="fas fa-upload nav-icon" onclick="showSection('upload')" title="Upload Status/Shorts"></i>
+      <div style="position: relative;">
+        <i class="fas fa-bell nav-icon" onclick="showNotifications()" title="Notifications"></i>
+        <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+      </div>
+      <i class="fas fa-moon nav-icon" id="darkModeIcon" onclick="toggleDarkMode()" title="Toggle Dark Mode"></i>
+      <i class="fas fa-user-circle nav-icon" onclick="showSection('profile')" title="Profile"></i>
+      <i class="fas fa-sign-out-alt nav-icon" onclick="logout()" title="Logout"></i>
     </div>
   </div>
 
-  <div class="container">
-    <!-- Alert Messages -->
-    <div id="alertContainer"></div>
+  <!-- Stories Bar -->
+  <div class="stories-bar" id="storiesBar">
+    <div class="stories-container" id="storiesContainer">
+      <!-- Stories will be loaded here -->
+    </div>
+  </div>
 
-    <!-- Dashboard Stats -->
-    <div id="dashboardSection" class="dashboard hidden">
-      <div class="stat-card">
-        <div class="stat-icon">📝</div>
-        <h3 id="stat1">0</h3>
-        <p id="stat1Label">Posts</p>
+  <!-- Alert Container -->
+  <div id="alertContainer" style="max-width: 600px; margin: 70px auto 0; padding: 0 20px;"></div>
+
+  <!-- Main Content -->
+  <div style="margin-top: 20px;">
+    <!-- Feed Section -->
+    <div id="feedSection" class="section active">
+      <div class="feed-container" id="feedContainer">
+        <!-- Posts will be loaded here -->
       </div>
-      <div class="stat-card">
-        <div class="stat-icon">🔓</div>
-        <h3 id="stat2">0</h3>
-        <p id="stat2Label">Open</p>
-      </div>
-      <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <h3 id="stat3">0</h3>
-        <p id="stat3Label">Completed</p>
+    </div>
+
+    <!-- Explore Section -->
+    <div id="exploreSection" class="section">
+      <div class="explore-grid" id="exploreGrid">
+        <!-- Explore items will be loaded here -->
       </div>
     </div>
 
     <!-- Create Post Section -->
-    <div id="createPostSection" class="card hidden">
-      <h2>📝 Create New Post</h2>
-      <form id="createPostForm">
-        <div class="form-group">
-          <label>✨ Title *</label>
-          <input type="text" id="postTitle" placeholder="e.g., Need a stunning wedding card design" required>
-        </div>
-        <div class="form-group">
-          <label>📂 Category *</label>
-          <select id="postCategory" required>
-            <option value="">Select Category</option>
-            <option value="poster">🖼️ Poster Design</option>
-            <option value="banner">🎯 Banner Design</option>
-            <option value="wedding-card">💒 Wedding Card</option>
-            <option value="website">🌐 Website Development</option>
-            <option value="seo">📈 SEO Services</option>
-            <option value="logo">🎨 Logo Design</option>
-            <option value="video">🎥 Video Editing</option>
-            <option value="other">📦 Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>📄 Description *</label>
-          <textarea id="postDescription" rows="5" placeholder="Describe your requirements in detail..." required></textarea>
-        </div>
-        <div class="form-group">
-          <label>💰 Budget *</label>
-          <input type="text" id="postBudget" placeholder="e.g., $500 or ₹5000" required>
-        </div>
-        <div class="form-group">
-          <label>📱 WhatsApp Number (optional)</label>
-          <input type="text" id="postWhatsapp" placeholder="e.g., +919876543210">
-        </div>
-        <div class="form-group">
-          <label>🖼️ Upload Images (optional, max 5)</label>
-          <input type="file" id="postImages" multiple accept="image/*">
-        </div>
-        <button type="submit" class="btn">🚀 Create Post</button>
-      </form>
-    </div>
-
-    <!-- All Posts Section -->
-    <div id="allPostsSection" class="hidden">
-      <div class="card">
-        <h2>📋 Browse All Posts</h2>
-        <div class="tabs">
-          <button class="tab active" onclick="filterPosts('all')">🌟 All</button>
-          <button class="tab" onclick="filterPosts('open')">🔓 Open</button>
-          <button class="tab" onclick="filterPosts('poster')">🖼️ Poster</button>
-          <button class="tab" onclick="filterPosts('banner')">🎯 Banner</button>
-          <button class="tab" onclick="filterPosts('wedding-card')">💒 Wedding</button>
-          <button class="tab" onclick="filterPosts('website')">🌐 Website</button>
-          <button class="tab" onclick="filterPosts('logo')">🎨 Logo</button>
-        </div>
-        <div id="postsContainer" class="posts-grid"></div>
+    <div id="createSection" class="section">
+      <div class="form-container">
+        <h2 style="margin-bottom: 24px; text-align: center;">Create New Post</h2>
+        <form id="createPostForm">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="postTitle" placeholder="e.g., Need a stunning wedding card design" required>
+          </div>
+          <div class="form-group">
+            <label>Category *</label>
+            <select id="postCategory" required>
+              <option value="">Select Category</option>
+              <option value="poster">Poster Design</option>
+              <option value="banner">Banner Design</option>
+              <option value="wedding-card">Wedding Card</option>
+              <option value="website">Website Development</option>
+              <option value="seo">SEO Services</option>
+              <option value="logo">Logo Design</option>
+              <option value="video">Video Editing</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Description *</label>
+            <textarea id="postDescription" rows="5" placeholder="Describe your requirements in detail..." required></textarea>
+          </div>
+          <div class="form-group">
+            <label>Budget *</label>
+            <input type="text" id="postBudget" placeholder="e.g., $500 or ₹5000" required>
+          </div>
+          <div class="form-group">
+            <label>WhatsApp Number (optional)</label>
+            <input type="text" id="postWhatsapp" placeholder="e.g., +919876543210">
+          </div>
+          <div class="form-group">
+            <label>Upload Images (optional, max 5)</label>
+            <input type="file" id="postImages" multiple accept="image/*">
+          </div>
+          <button type="submit" class="btn-primary">Share Post</button>
+        </form>
       </div>
     </div>
 
-    <!-- My Posts Section (for users) -->
-    <div id="myPostsSection" class="card hidden">
-      <h2>📊 My Posts</h2>
-      <div id="myPostsContainer" class="posts-grid"></div>
-    </div>
-
-    <!-- Creators Section -->
-    <div id="creatorsSection" class="hidden">
-      <div class="card">
-        <h2>🎨 Meet Our Talented Creators</h2>
-        <div id="creatorsContainer" class="posts-grid"></div>
+    <!-- Upload Status/Shorts Section -->
+    <div id="uploadSection" class="section">
+      <div class="form-container">
+        <h2 style="margin-bottom: 24px; text-align: center;">Upload Status or Shorts</h2>
+        <form id="statusShortsForm">
+          <div class="form-group">
+            <label>Type *</label>
+            <select id="ssType" required>
+              <option value="">Select Type</option>
+              <option value="status">⏰ Status (Auto-deletes in 24 hours)</option>
+              <option value="shorts">🎬 Shorts (Permanent)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Media File * (Video or Image)</label>
+            <input type="file" id="ssMedia" accept="video/*,image/*" required>
+            <small style="color: var(--text-secondary); display: block; margin-top: 6px;">📹 Video (max 100MB) or 🖼️ Image</small>
+          </div>
+          <div class="form-group">
+            <label>Caption (optional)</label>
+            <textarea id="ssCaption" rows="3" placeholder="Add a caption..."></textarea>
+          </div>
+          <button type="submit" class="btn-primary">Upload</button>
+        </form>
       </div>
     </div>
 
-    <!-- Status & Shorts Upload Section -->
-    <div id="statusShortsUploadSection" class="card hidden">
-      <h2>📸 Upload Status or Shorts</h2>
-      <form id="statusShortsForm">
-        <div class="form-group">
-          <label>📂 Type *</label>
-          <select id="ssType" required>
-            <option value="">Select Type</option>
-            <option value="status">⏰ Status (24 hours auto-delete)</option>
-            <option value="shorts">🎬 Shorts (Permanent)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>🎬 Media File * (Video or Image)</label>
-          <input type="file" id="ssMedia" accept="video/*,image/*" required>
-          <small style="color: #718096; display: block; margin-top: 0.5rem;">📹 Video (max 100MB) or 🖼️ Image</small>
-        </div>
-        <div class="form-group">
-          <label>💬 Caption (optional)</label>
-          <textarea id="ssCaption" rows="3" placeholder="Add a caption..."></textarea>
-        </div>
-        <button type="submit" class="btn">🚀 Upload</button>
-      </form>
-    </div>
-
-    <!-- Status & Shorts Feed Section -->
-    <div id="statusShortsFeedSection" class="hidden">
-      <div class="card">
-        <h2>📸 Status & Shorts Feed</h2>
-        <div class="tabs">
-          <button class="tab active" onclick="loadStatusShortsFeed('latest', 'all')">🌟 Latest</button>
-          <button class="tab" onclick="loadStatusShortsFeed('popular', 'all')">🔥 Popular</button>
-          <button class="tab" onclick="loadStatusShortsFeed('latest', 'status')">⏰ Status</button>
-          <button class="tab" onclick="loadStatusShortsFeed('latest', 'shorts')">🎬 Shorts</button>
-        </div>
-        <div id="statusShortsContainer" class="posts-grid"></div>
+    <!-- Status/Shorts Feed Section -->
+    <div id="reelsSection" class="section">
+      <div class="feed-container" id="reelsContainer">
+        <!-- Status/Shorts will be loaded here -->
       </div>
     </div>
 
-    <!-- My Status & Shorts Section -->
-    <div id="myStatusShortsSection" class="card hidden">
-      <h2>📊 My Status & Shorts</h2>
-      <div id="myStatusShortsContainer" class="posts-grid"></div>
+    <!-- Activity Section -->
+    <div id="activitySection" class="section">
+      <div class="feed-container">
+        <div class="post-card" style="padding: 40px; text-align: center;">
+          <i class="fas fa-heart" style="font-size: 3rem; color: #ed4956; margin-bottom: 16px;"></i>
+          <h3>Activity & Notifications</h3>
+          <p style="color: var(--text-secondary); margin-top: 12px;">See likes and comments on your posts</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Section -->
+    <div id="profileSection" class="section">
+      <div class="profile-header">
+        <div class="profile-info">
+          <div class="profile-avatar" id="profileAvatar">U</div>
+          <div class="profile-stats">
+            <div class="profile-username" id="profileUsername">username</div>
+            <div class="profile-stats-row">
+              <div class="stat-item">
+                <div class="stat-number" id="profilePosts">0</div>
+                <div class="stat-label">Posts</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number" id="profileFollowers">0</div>
+                <div class="stat-label">Followers</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number" id="profileFollowing">0</div>
+                <div class="stat-label">Following</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-bio">
+        <div class="profile-name" id="profileName">User Name</div>
+        <div class="profile-bio-text" id="profileBio">Freelancer on GigHub</div>
+        <div class="profile-action-btns">
+          <button class="btn-primary" style="flex: 1;" onclick="showSection('create')">Create Post</button>
+          <button class="follow-btn" id="followBtn" onclick="followUser(currentUser.id, this)" style="display: none;">Follow</button>
+        </div>
+      </div>
+      <div class="feed-container" id="profilePostsContainer">
+        <!-- User's posts will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation (Mobile) -->
+  <div class="bottom-nav">
+    <div class="bottom-nav-item active" onclick="showSection('feed')">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </div>
+    <div class="bottom-nav-item" onclick="showSection('explore')">
+      <i class="fas fa-search"></i>
+      <span>Explore</span>
+    </div>
+    <div class="bottom-nav-item" onclick="showSection('reels')">
+      <i class="fas fa-play-circle"></i>
+      <span>Reels</span>
+    </div>
+    <div class="bottom-nav-item" onclick="showSection('upload')">
+      <i class="fas fa-plus-square"></i>
+      <span>Upload</span>
+    </div>
+    <div class="bottom-nav-item" onclick="showSection('profile')">
+      <i class="fas fa-user-circle"></i>
+      <span>Profile</span>
     </div>
   </div>
 
   <script src="/script.js"></script>
+  <script>
+    // Debug: Check if script.js loaded
+    window.addEventListener('load', () => {
+      console.log('=== DEBUG INFO ===');
+      console.log('showSection exists:', typeof showSection === 'function');
+      console.log('logout exists:', typeof logout === 'function');
+      console.log('likePost exists:', typeof likePost === 'function');
+      console.log('currentUser:', currentUser);
+      console.log('==================');
+      
+      // Visual feedback that JS is loaded
+      const alertContainer = document.getElementById('alertContainer');
+      if (alertContainer) {
+        // Brief success message
+        const msg = document.createElement('div');
+        msg.className = 'alert alert-success';
+        msg.textContent = '✓ App loaded successfully!';
+        msg.style.position = 'fixed';
+        msg.style.top = '70px';
+        msg.style.left = '50%';
+        msg.style.transform = 'translateX(-50%)';
+        msg.style.zIndex = '9999';
+        alertContainer.appendChild(msg);
+        
+        setTimeout(() => {
+          msg.remove();
+        }, 2000);
+      }
+      
+      if (typeof showSection !== 'function') {
+        alert('ERROR: script.js failed to load!');
+      }
+    });
+    
+    // Make debugging easier
+    window.testClick = function() {
+      alert('Click working!');
+    };
+  </script>
 </body>
 </html>
