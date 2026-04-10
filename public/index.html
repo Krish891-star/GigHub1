@@ -3,7 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GigHub - Instagram + Fiverr like platform for clients and creators">
+  <meta name="theme-color" content="#405DE6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GigHub">
   <title>GigHub - Freelance Marketplace</title>
+  <link rel="manifest" href="/manifest.json">
+  <!-- Favicon and App Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icon-16x16.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="256x256" href="/icon-256x256.png">
+  <link rel="apple-touch-icon" sizes="384x384" href="/icon-384x384.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png">
+  <meta name="msapplication-TileImage" content="/icon-256x256.png">
+  <meta name="msapplication-TileColor" content="#405DE6">
+  <meta name="msapplication-config" content="/manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     * {
@@ -50,19 +67,34 @@
     }
 
     .nav-logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      background: var(--ig-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
       cursor: pointer;
       user-select: none;
       transition: transform 0.2s;
+      display: flex;
+      align-items: center;
+      background: transparent;
+      padding: 4px;
+      border-radius: 8px;
     }
 
     .nav-logo:hover {
       transform: scale(1.05);
+      background: rgba(64, 93, 230, 0.08);
+    }
+
+    .nav-logo img {
+      height: 45px;
+      width: auto;
+      max-width: 150px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+      display: block;
+      visibility: visible;
+      opacity: 1;
+    }
+
+    body.dark-mode .nav-logo img {
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4)) brightness(1.15) contrast(1.1);
     }
 
     .nav-icons {
@@ -151,6 +183,48 @@
       max-width: 70px;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    /* Your Story Add Icon */
+    .story-avatar.your-story {
+      position: relative;
+      border: 2px dashed var(--border-color);
+      background: transparent;
+      padding: 0;
+    }
+
+    .story-avatar.your-story .avatar-placeholder {
+      border: 2px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .add-story-icon {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 22px;
+      height: 22px;
+      background: var(--ig-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      border: 2px solid var(--bg-secondary);
+      z-index: 10;
+    }
+
+    .story-avatar.has-story {
+      border: 3px solid transparent;
+      background: var(--ig-gradient);
+      padding: 2px;
+    }
+
+    .story-avatar.has-story .avatar-placeholder {
+      border: 2px solid var(--bg-secondary);
     }
 
     /* Main Feed */
@@ -306,37 +380,46 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 60px;
+      height: 70px;
       background: var(--bg-secondary);
       border-top: 1px solid var(--border-color);
       display: flex;
       justify-content: space-around;
       align-items: center;
       z-index: 1000;
+      padding: 0 4px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
     .bottom-nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       cursor: pointer;
       color: var(--text-primary);
-      transition: transform 0.2s;
+      transition: all 0.2s ease;
       user-select: none;
-      padding: 8px 12px;
-      border-radius: 8px;
+      padding: 6px 8px;
+      border-radius: 12px;
+      min-width: 50px;
+      flex: 1;
     }
 
     .bottom-nav-item:hover {
-      transform: scale(1.1);
-      background: rgba(64, 93, 230, 0.1);
+      transform: translateY(-2px);
+      background: rgba(64, 93, 230, 0.08);
     }
 
     .bottom-nav-item:active {
-      transform: scale(0.9);
+      transform: scale(0.95) translateY(0);
     }
 
     .bottom-nav-item.active {
+      color: var(--ig-primary);
+    }
+
+    .bottom-nav-item.active i {
       background: var(--ig-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -344,12 +427,15 @@
     }
 
     .bottom-nav-item i {
-      font-size: 1.5rem;
-      margin-bottom: 4px;
+      font-size: 1.4rem;
+      margin-bottom: 3px;
+      transition: all 0.2s ease;
     }
 
     .bottom-nav-item span {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
+      font-weight: 500;
+      white-space: nowrap;
     }
 
     /* Sections */
@@ -499,60 +585,126 @@
       max-width: 600px;
       margin: 80px auto 20px;
       background: var(--bg-secondary);
-      padding: 30px;
+      padding: 24px;
       border: 1px solid var(--border-color);
-      border-radius: 8px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .form-group label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 600;
       font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    .form-group small {
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    .form-group small i {
+      margin-right: 4px;
+      color: var(--ig-primary);
     }
 
     .form-group input,
     .form-group textarea,
     .form-group select {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
+      padding: 12px 14px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
       font-size: 0.95rem;
-      background: #fafafa;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
     }
 
     .form-group input:focus,
     .form-group textarea:focus,
     .form-group select:focus {
       outline: none;
-      border-color: #a8a8a8;
+      border-color: var(--ig-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 0 0 3px rgba(64, 93, 230, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .caption-input {
+      border: 2px solid var(--border-color);
+      background: var(--bg-secondary);
+      font-weight: 400;
+    }
+
+    .caption-input:focus {
+      border-color: #5851DB;
+      box-shadow: 0 0 0 4px rgba(88, 81, 219, 0.15);
     }
 
     .btn-primary {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background: var(--ig-gradient);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 1rem;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(64, 93, 230, 0.3);
+      position: relative;
+      overflow: hidden;
     }
 
     .btn-primary:hover {
-      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(64, 93, 230, 0.4);
+      opacity: 0.95;
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(64, 93, 230, 0.3);
     }
 
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-upload {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-upload:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-create {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    }
+
+    .btn-create:hover {
+      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+    }
+
+    .btn-primary i {
+      margin-right: 8px;
     }
 
     /* Alert Messages */
@@ -725,16 +877,21 @@
 
     /* Desktop Responsive */
     @media (min-width: 768px) {
-      .bottom-nav {
-        display: none;
-      }
-
       body {
-        padding-bottom: 20px;
+        padding-bottom: 80px;
       }
       
       .feed-container {
         max-width: 600px;
+      }
+      
+      .bottom-nav {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-radius: 20px 20px 0 0;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
       }
     }
     
@@ -800,7 +957,13 @@
       }
       
       .nav-logo {
-        font-size: 1.3rem;
+        /* Remove font-size since we're using image */
+        padding: 2px;
+      }
+      
+      .nav-logo img {
+        height: 38px;
+        max-width: 130px;
       }
       
       .nav-icons {
@@ -1069,18 +1232,244 @@
       gap: 12px;
       margin-top: 16px;
     }
+
+    /* Post Type Selector */
+    .post-type-selector {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .post-type-btn {
+      padding: 10px 20px;
+      border: 2px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .post-type-btn:hover {
+      border-color: #833ab4;
+      transform: translateY(-2px);
+    }
+
+    .post-type-btn.active {
+      background: var(--ig-gradient);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(131, 58, 180, 0.3);
+    }
+
+    /* Post Type Badge */
+    .post-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--ig-gradient);
+      color: white;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Story Upload Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* Story Viewer */
+    .story-viewer-content {
+      background: black;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .story-viewer-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .story-viewer-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .story-viewer-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--ig-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .story-viewer-info {
+      color: white;
+    }
+
+    .story-viewer-username {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .story-viewer-time {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .story-viewer-media {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: black;
+    }
+
+    .story-viewer-caption {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      padding: 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      color: white;
+      font-size: 0.95rem;
+    }
+
+    .story-nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .story-nav-arrow:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .story-nav-prev {
+      left: 20px;
+    }
+
+    .story-nav-next {
+      right: 20px;
+    }
+
+    /* Story Avatar with Add Icon */
+    .story-avatar {
+      position: relative;
+    }
+
+    .story-avatar.your-story {
+      border: 2px dashed var(--border-color);
+    }
+
+    .add-story-icon {
+      position: absolute;
+      bottom: -5px;
+      right: -5px;
+      width: 24px;
+      height: 24px;
+      background: var(--ig-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: 2px solid var(--bg-primary);
+    }
+
+    .story-avatar.has-story {
+      border: 3px solid transparent;
+      background: var(--ig-gradient);
+      padding: 2px;
+    }
+
+    .story-avatar.has-story .avatar-placeholder {
+      border: 2px solid var(--bg-primary);
+    }
+
+    /* Video Post Styles */
+    .post-video {
+      width: 100%;
+      max-height: 600px;
+      object-fit: contain;
+      background: black;
+    }
   </style>
 </head>
 <body>
   <!-- Instagram-style Top Navbar -->
   <div class="top-nav">
-    <div class="nav-logo" onclick="showSection('feed')">GigHub</div>
+    <div class="nav-logo" onclick="showSection('feed')">
+      <img src="/kkkk.png" alt="GigHub Logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjYwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZCIgeDE9IjAlIiB5MT0iMCUiIHgyPSIxMDAlIiB5Mj0iMTAwJSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzQwNURFNiIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3R5bGU9InN0b3AtY29sb3I6IzU4NTFEQiIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iNjAiIHJ4PSIxMCIgZmlsbD0idXJsKCNncmFkKSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdJZ0h1YjwvdGV4dD48L3N2Zz4=';">
+    </div>
     <div class="nav-icons">
       <i class="fas fa-search nav-icon" onclick="showSection('explore')" title="Search"></i>
       <div style="position: relative;">
         <i class="fas fa-bell nav-icon" onclick="showNotifications()" title="Notifications"></i>
         <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
       </div>
+      <i class="fas fa-download nav-icon" id="installBtn" onclick="installApp()" title="Install App" style="display: none;"></i>
       <i class="fas fa-moon nav-icon" id="darkModeIcon" onclick="toggleDarkMode()" title="Toggle Dark Mode"></i>
       <i class="fas fa-sign-out-alt nav-icon" onclick="logout()" title="Logout"></i>
     </div>
@@ -1105,53 +1494,122 @@
       </div>
     </div>
 
-    <!-- Explore Section -->
+    <!-- Explore Section (Search Only) -->
     <div id="exploreSection" class="section">
-      <div class="explore-grid" id="exploreGrid">
-        <!-- Explore items will be loaded here -->
+      <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <!-- Search Bar -->
+        <div class="form-group" style="margin-bottom: 20px;">
+          <div style="position: relative;">
+            <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;"></i>
+            <input type="text" id="searchInput" placeholder="Search posts, creators, skills..." 
+              style="width: 100%; padding: 14px 14px 14px 48px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1rem; background: var(--bg-secondary); color: var(--text-primary);"
+              onkeyup="handleSearch(event)">
+          </div>
+        </div>
+
+        <!-- Search Type Tabs -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+          <button class="search-tab-btn active" id="searchPostsTab" onclick="setSearchType('posts')" 
+            style="padding: 10px 24px; border: 2px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-image"></i> Posts
+          </button>
+          <button class="search-tab-btn" id="searchCreatorsTab" onclick="setSearchType('creators')"
+            style="padding: 10px 24px; border: 2px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); border-radius: 25px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+            <i class="fas fa-users"></i> Creators
+          </button>
+        </div>
+
+        <!-- Search Results -->
+        <div id="searchResults">
+          <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
+            <i class="fas fa-search" style="font-size: 4rem; margin-bottom: 16px; opacity: 0.3;"></i>
+            <h3 style="margin-bottom: 8px;">Search GigHub</h3>
+            <p>Find posts, creators, and more</p>
+          </div>
+        </div>
+
+        <!-- Posts Search Results Grid -->
+        <div id="postsSearchResults" class="explore-grid" style="display: none;"></div>
+
+        <!-- Creators Search Results List -->
+        <div id="creatorsSearchResults" style="display: none;"></div>
       </div>
     </div>
 
     <!-- Create Post Section -->
     <div id="createSection" class="section">
       <div class="form-container">
-        <h2 style="margin-bottom: 24px; text-align: center;">Create New Post</h2>
+        <h2 style="margin-bottom: 20px; text-align: center; font-size: 1.5rem; background: var(--ig-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Create New Post</h2>
+        
+        <!-- Post Type Selector -->
+        <div class="post-type-selector">
+          <button class="post-type-btn active" onclick="selectPostType('post')" id="postTypePost">
+            <i class="fas fa-image"></i> Post
+          </button>
+          <button class="post-type-btn" onclick="selectPostType('reel')" id="postTypeReel">
+            <i class="fas fa-film"></i> Reel
+          </button>
+          <button class="post-type-btn" onclick="selectPostType('short')" id="postTypeShort">
+            <i class="fas fa-video"></i> Short
+          </button>
+          <button class="post-type-btn" onclick="selectPostType('video')" id="postTypeVideo">
+            <i class="fas fa-play-circle"></i> Video
+          </button>
+        </div>
+
         <form id="createPostForm">
-          <div class="form-group">
-            <label>Title *</label>
-            <input type="text" id="postTitle" placeholder="e.g., Need a stunning wedding card design" required>
+          <!-- Traditional Post Fields -->
+          <div id="traditionalPostFields">
+            <div class="form-group">
+              <label>Title *</label>
+              <input type="text" id="postTitle" placeholder="e.g., Need a stunning wedding card design">
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="postCategory">
+                <option value="">Select Category</option>
+                <option value="poster">Poster Design</option>
+                <option value="banner">Banner Design</option>
+                <option value="wedding-card">Wedding Card</option>
+                <option value="website">Website Development</option>
+                <option value="seo">SEO Services</option>
+                <option value="logo">Logo Design</option>
+                <option value="video">Video Editing</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Description *</label>
+              <textarea id="postDescription" rows="5" placeholder="Describe your requirements in detail..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Budget *</label>
+              <input type="text" id="postBudget" placeholder="e.g., $500 or ₹5000">
+            </div>
+            <div class="form-group">
+              <label>WhatsApp Number (optional)</label>
+              <input type="text" id="postWhatsapp" placeholder="e.g., +919876543210">
+            </div>
           </div>
+
+          <!-- Media Upload Fields (for all post types) -->
           <div class="form-group">
-            <label>Category *</label>
-            <select id="postCategory" required>
-              <option value="">Select Category</option>
-              <option value="poster">Poster Design</option>
-              <option value="banner">Banner Design</option>
-              <option value="wedding-card">Wedding Card</option>
-              <option value="website">Website Development</option>
-              <option value="seo">SEO Services</option>
-              <option value="logo">Logo Design</option>
-              <option value="video">Video Editing</option>
-              <option value="other">Other</option>
-            </select>
+            <label id="mediaLabel">Upload Images (optional, max 5)</label>
+            <input type="file" id="postMedia" multiple accept="image/*">
+            <small style="color: var(--text-secondary); display: block; margin-top: 6px;" id="mediaHint">
+              <i class="fas fa-image"></i> Images for your post
+            </small>
           </div>
-          <div class="form-group">
-            <label>Description *</label>
-            <textarea id="postDescription" rows="5" placeholder="Describe your requirements in detail..." required></textarea>
+
+          <!-- Caption for Reels/Shorts/Videos -->
+          <div class="form-group" id="captionField" style="display: none;">
+            <label>Caption</label>
+            <textarea id="postCaption" rows="3" placeholder="Write a caption for your post..."></textarea>
           </div>
-          <div class="form-group">
-            <label>Budget *</label>
-            <input type="text" id="postBudget" placeholder="e.g., $500 or ₹5000" required>
-          </div>
-          <div class="form-group">
-            <label>WhatsApp Number (optional)</label>
-            <input type="text" id="postWhatsapp" placeholder="e.g., +919876543210">
-          </div>
-          <div class="form-group">
-            <label>Upload Images (optional, max 5)</label>
-            <input type="file" id="postImages" multiple accept="image/*">
-          </div>
-          <button type="submit" class="btn-primary">Share Post</button>
+
+          <button type="submit" class="btn-primary btn-create" id="createPostBtn">
+            <i class="fas fa-paper-plane"></i> Share Post
+          </button>
         </form>
       </div>
     </div>
@@ -1159,27 +1617,82 @@
     <!-- Upload Status/Shorts Section -->
     <div id="uploadSection" class="section">
       <div class="form-container">
-        <h2 style="margin-bottom: 24px; text-align: center;">Upload Status or Shorts</h2>
+        <h2 style="margin-bottom: 20px; text-align: center; font-size: 1.5rem; background: var(--ig-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Upload Status or Shorts</h2>
         <form id="statusShortsForm">
           <div class="form-group">
             <label>Type *</label>
             <select id="ssType" required>
-              <option value="">Select Type</option>
-              <option value="status">⏰ Status (Auto-deletes in 24 hours)</option>
-              <option value="shorts">🎬 Shorts (Permanent)</option>
+              <option value="">Choose upload type...</option>
+              <option value="shorts"><i class="fas fa-film"></i> Shorts (Permanent)</option>
             </select>
+            <small style="color: var(--text-secondary); display: block; margin-top: 6px;">
+              <i class="fas fa-info-circle"></i> Stories can only be uploaded from "Your Story" icon at the top
+            </small>
           </div>
           <div class="form-group">
             <label>Media File * (Video or Image)</label>
             <input type="file" id="ssMedia" accept="video/*,image/*" required>
-            <small style="color: var(--text-secondary); display: block; margin-top: 6px;">📹 Video (max 100MB) or 🖼️ Image</small>
+            <small style="color: var(--text-secondary); display: block; margin-top: 6px;"><i class="fas fa-video"></i> Video (max 100MB) or <i class="fas fa-image"></i> Image</small>
           </div>
           <div class="form-group">
             <label>Caption (optional)</label>
-            <textarea id="ssCaption" rows="3" placeholder="Add a caption..."></textarea>
+            <textarea id="ssCaption" rows="3" placeholder="Write a caption for your upload..." class="caption-input"></textarea>
           </div>
-          <button type="submit" class="btn-primary">Upload</button>
+          <button type="submit" class="btn-primary btn-upload"><i class="fas fa-cloud-upload-alt"></i> Upload to GigHub</button>
         </form>
+      </div>
+    </div>
+
+    <!-- Story Upload Modal -->
+    <div id="storyUploadModal" class="modal" style="display: none;">
+      <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color);">
+          <h3 style="margin: 0; font-size: 1.2rem;">Add to Your Story</h3>
+          <i class="fas fa-times" onclick="closeStoryUploadModal()" style="cursor: pointer; font-size: 1.5rem;"></i>
+        </div>
+        <form id="storyUploadForm" style="padding: 20px;">
+          <div class="form-group">
+            <label>Photo or Video *</label>
+            <input type="file" id="storyMedia" accept="video/*,image/*" required>
+            <small style="color: var(--text-secondary); display: block; margin-top: 6px;">
+              <i class="fas fa-clock"></i> This will disappear after 24 hours
+            </small>
+          </div>
+          <div class="form-group">
+            <label>Caption (optional)</label>
+            <textarea id="storyCaption" rows="3" placeholder="Add a caption..." class="caption-input"></textarea>
+          </div>
+          <button type="submit" class="btn-primary" style="width: 100%;">
+            <i class="fas fa-share"></i> Share to Story
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Story Viewer Modal -->
+    <div id="storyViewerModal" class="modal" style="display: none;">
+      <div class="story-viewer-content">
+        <div class="story-viewer-header">
+          <div class="story-viewer-user">
+            <div class="story-viewer-avatar" id="storyViewerAvatar">U</div>
+            <div class="story-viewer-info">
+              <div class="story-viewer-username" id="storyViewerUsername">username</div>
+              <div class="story-viewer-time" id="storyViewerTime">2h ago</div>
+            </div>
+          </div>
+          <i class="fas fa-times" onclick="closeStoryViewer()" style="cursor: pointer; font-size: 1.8rem; color: white;"></i>
+        </div>
+        <div class="story-viewer-media" id="storyViewerMedia">
+          <!-- Story media will be displayed here -->
+        </div>
+        <div class="story-viewer-caption" id="storyViewerCaption"></div>
+        <!-- Navigation arrows -->
+        <div class="story-nav-arrow story-nav-prev" onclick="previousStory()">
+          <i class="fas fa-chevron-left"></i>
+        </div>
+        <div class="story-nav-arrow story-nav-next" onclick="nextStory()">
+          <i class="fas fa-chevron-right"></i>
+        </div>
       </div>
     </div>
 
@@ -1198,6 +1711,13 @@
           <h3>Activity & Notifications</h3>
           <p style="color: var(--text-secondary); margin-top: 12px;">See likes and comments on your posts</p>
         </div>
+      </div>
+    </div>
+
+    <!-- Creators Directory Section -->
+    <div id="creatorsSection" class="section">
+      <div class="feed-container" id="creatorsContainer">
+        <!-- Creators will be loaded here -->
       </div>
     </div>
 
@@ -1253,13 +1773,9 @@
       <i class="fas fa-plus-circle"></i>
       <span>Create</span>
     </div>
-    <div class="bottom-nav-item" onclick="showSection('reels')">
-      <i class="fas fa-play-circle"></i>
-      <span>Reels</span>
-    </div>
-    <div class="bottom-nav-item" onclick="showSection('upload')">
-      <i class="fas fa-upload"></i>
-      <span>Upload</span>
+    <div class="bottom-nav-item" onclick="showSection('creators')">
+      <i class="fas fa-users"></i>
+      <span>Creators</span>
     </div>
     <div class="bottom-nav-item" onclick="showSection('profile')">
       <i class="fas fa-user-circle"></i>
@@ -1269,6 +1785,69 @@
 
   <script src="/script.js"></script>
   <script>
+    // PWA Install Logic
+    let deferredPrompt;
+    const installBtn = document.getElementById('installBtn');
+
+    // Listen for the beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      deferredPrompt = e;
+      // Update UI to notify the user they can add to home screen
+      if (installBtn) {
+        installBtn.style.display = 'block';
+      }
+    });
+
+    // Install app function
+    function installApp() {
+      if (deferredPrompt) {
+        // Show the install prompt
+        deferredPrompt.prompt();
+        // Wait for the user to respond to the prompt
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+            showAlert('App installed successfully!', 'success');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+          // Clear the deferredPrompt variable
+          deferredPrompt = null;
+          // Hide the install button
+          if (installBtn) {
+            installBtn.style.display = 'none';
+          }
+        });
+      }
+    }
+
+    // Listen for successful app installation
+    window.addEventListener('appinstalled', (evt) => {
+      console.log('App was installed');
+      showAlert('GigHub installed successfully!', 'success');
+      // Hide the install button
+      if (installBtn) {
+        installBtn.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+
     // Debug: Check if script.js loaded
     window.addEventListener('load', () => {
       console.log('=== DEBUG INFO ===');
@@ -1277,6 +1856,22 @@
       console.log('likePost exists:', typeof likePost === 'function');
       console.log('currentUser:', currentUser);
       console.log('==================');
+      
+      // Verify logo is loading
+      const logoImg = document.querySelector('.nav-logo img');
+      if (logoImg) {
+        console.log('Logo image element found');
+        console.log('Logo src:', logoImg.src);
+        console.log('Logo natural width:', logoImg.naturalWidth);
+        console.log('Logo natural height:', logoImg.naturalHeight);
+        console.log('Logo computed style:', window.getComputedStyle(logoImg));
+        
+        if (logoImg.naturalWidth === 0) {
+          console.warn('Logo image failed to load or has zero dimensions');
+        }
+      } else {
+        console.error('Logo image element not found!');
+      }
       
       // Visual feedback that JS is loaded
       const alertContainer = document.getElementById('alertContainer');

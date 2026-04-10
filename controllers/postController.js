@@ -11,40 +11,98 @@ exports.setMongoDBStatus = (status) => {
 
 exports.createPost = async (req, res) => {
   try {
-    const { title, description, category, budget, whatsapp } = req.body;
+    console.log('=== CREATE POST REQUEST ===');
+    console.log('Body:', req.body);
+    console.log('Files:', req.files ? req.files.length : 0);
+    console.log('User:', req.user);
+    
+    const { title, description, category, budget, whatsapp, postType, caption } = req.body;
 
-    if (!title || !description || !category || !budget) {
-      return res.status(400).json({ error: 'All fields are required' });
+    // Determine post type (default to 'post')
+    const type = postType || 'post';
+    console.log('Post type:', type);
+    
+    // For traditional posts, require all fields
+    if (type === 'post') {
+      if (!title || !description || !category || !budget) {
+        return res.status(400).json({ error: 'All fields are required for posts' });
+      }
     }
 
-    const imagePaths = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    // Separate image and video files
+    const imagePaths = [];
+    let videoPath = '';
+    let mediaType = 'image';
+
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        console.log('Processing file:', file.originalname, file.mimetype);
+        if (file.mimetype.startsWith('video/')) {
+          videoPath = `/uploads/${file.filename}`;
+          mediaType = 'video';
+        } else {
+          imagePaths.push(`/uploads/${file.filename}`);
+        }
+      });
+    }
+
+    console.log('Image paths:', imagePaths);
+    console.log('Video path:', videoPath);
+    console.log('Media type:', mediaType);
+
+    // For reels/shorts/video, require media
+    if (type !== 'post' && !videoPath && imagePaths.length === 0) {
+      return res.status(400).json({ error: 'Media file is required for reels/shorts/videos' });
+    }
 
     let user;
+    let inMemoryDB = null;
+    
     if (useMongoDB) {
       user = await User.findById(req.user.id);
     } else {
-      const inMemoryDB = authController.getInMemoryDB();
+      inMemoryDB = authController.getInMemoryDB();
       user = inMemoryDB.users.find(u => u.id === req.user.id);
     }
 
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('User found:', user.name);
+
     if (useMongoDB) {
-      const post = new Post({
+      const postData = {
         userId: req.user.id,
         userName: user.name,
         userPhone: user.phone,
         userWhatsapp: whatsapp || user.whatsapp,
         userAvatar: user.profileImage || '',
-        title,
-        description,
-        category,
-        budget,
-        images: imagePaths
-      });
+        postType: type,
+        mediaType,
+        videoUrl: videoPath,
+        images: imagePaths,
+        caption: caption || description || '',
+      };
 
+      // Add traditional post fields if it's a regular post
+      if (type === 'post') {
+        postData.title = title;
+        postData.description = description;
+        postData.category = category;
+        postData.budget = budget;
+      } else {
+        // For reels/shorts/videos, use caption as title
+        postData.title = caption || `${type} by ${user.name}`;
+        postData.description = caption || '';
+      }
+
+      console.log('Creating post with data:', postData);
+      const post = new Post(postData);
       await post.save();
+      console.log('Post created successfully:', post._id);
       res.status(201).json({ message: 'Post created successfully', post });
     } else {
-      const inMemoryDB = authController.getInMemoryDB();
       const post = {
         id: inMemoryDB.nextPostId++,
         userId: req.user.id,
@@ -52,10 +110,14 @@ exports.createPost = async (req, res) => {
         userPhone: user.phone,
         userWhatsapp: whatsapp || user.whatsapp,
         userAvatar: '',
-        title,
-        description,
-        category,
-        budget,
+        postType: type,
+        mediaType,
+        videoUrl: videoPath,
+        title: type === 'post' ? title : (caption || `${type} by ${user.name}`),
+        description: type === 'post' ? description : (caption || ''),
+        category: category || 'other',
+        budget: budget || '',
+        caption: caption || description || '',
         images: imagePaths,
         likes: [],
         comments: [],
@@ -64,11 +126,13 @@ exports.createPost = async (req, res) => {
       };
 
       inMemoryDB.posts.push(post);
+      console.log('Post created in memory:', post.id);
       res.status(201).json({ message: 'Post created successfully', post });
     }
   } catch (err) {
     console.error('Create post error:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 };
 

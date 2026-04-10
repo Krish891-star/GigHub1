@@ -6,15 +6,22 @@ const postSchema = new mongoose.Schema({
   userPhone: String,
   userWhatsapp: String,
   userAvatar: String,
-  title: { type: String, required: true },
-  description: { type: String, required: true },
+  title: String,
+  description: String,
   category: { 
     type: String, 
     enum: ['poster', 'banner', 'wedding-card', 'website', 'seo', 'logo', 'video', 'other'],
-    required: true 
   },
-  budget: { type: String, required: true },
+  budget: String,
+  postType: { 
+    type: String, 
+    enum: ['post', 'reel', 'short', 'video'], 
+    default: 'post' 
+  },
   images: [String],
+  videoUrl: String,
+  mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
+  caption: String,
   likes: [{ type: String }],
   comments: [{
     userId: String,

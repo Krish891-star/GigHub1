@@ -5,7 +5,7 @@ const path = require('path');
 const postController = require('../controllers/postController');
 const { authenticateToken, checkRole } = require('../middleware/auth');
 
-// Multer configuration for post images
+// Multer configuration for post images and videos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'uploads/');
@@ -19,21 +19,21 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit for images
+    fileSize: 100 * 1024 * 1024, // 100MB limit for videos
     files: 5
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed (JPEG, PNG, GIF, WebP)'));
+      cb(new Error('Only image and video files are allowed (JPEG, PNG, GIF, WebP, MP4, WebM)'));
     }
   }
 });
 
 // Post routes
-router.post('/', authenticateToken, upload.array('images', 5), postController.createPost);
+router.post('/', authenticateToken, upload.array('media', 5), postController.createPost);
 router.get('/', postController.getAllPosts);
 router.get('/my', authenticateToken, postController.getMyPosts);
 router.get('/:id', postController.getPost);

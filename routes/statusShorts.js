@@ -32,7 +32,9 @@ const upload = multer({
 
 // Status & Shorts routes
 router.post('/upload', authenticateToken, upload.single('media'), statusShortsController.upload);
+router.post('/story', authenticateToken, upload.single('media'), statusShortsController.uploadStory);
 router.get('/feed', statusShortsController.getFeed);
+router.get('/stories', statusShortsController.getStories);
 router.get('/my', authenticateToken, statusShortsController.getMyPosts);
 router.post('/:id/like', authenticateToken, statusShortsController.like);
 router.post('/:id/comment', authenticateToken, statusShortsController.comment);

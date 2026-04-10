@@ -680,8 +680,11 @@
       };
 
       try {
-        const response = await fetch(`${API_URL}/api/users/profile`, {
-          method: 'PUT',
+        console.log('Submitting profile data...');
+        console.log('Profile data:', profileData);
+        
+        const response = await fetch(`${API_URL}/api/users/complete-profile`, {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -689,19 +692,24 @@
           body: JSON.stringify(profileData)
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (response.ok) {
           showAlert('Profile completed successfully!', 'success');
+          console.log('Updating localStorage with:', data.user);
           localStorage.setItem('user', JSON.stringify(data.user));
           setTimeout(() => {
             window.location.href = '/';
           }, 1500);
         } else {
-          showAlert(data.error || 'Failed to update profile');
+          console.error('Profile completion failed:', data);
+          showAlert(data.error || 'Failed to update profile. Status: ' + response.status);
         }
       } catch (err) {
-        showAlert('Network error. Please try again.');
+        console.error('Network error details:', err);
+        showAlert('Network error: ' + err.message + '. Please check console for details.');
       }
     }
 

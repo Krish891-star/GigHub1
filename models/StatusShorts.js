@@ -18,11 +18,21 @@ const statusShortsSchema = new mongoose.Schema({
   views: [{ type: String }],
   viewCount: { type: Number, default: 0 },
   isDeleted: { type: Boolean, default: false },
+  expiresAt: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 
-// Auto-delete status after 24 hours
+// Index for auto-deletion of status after 24 hours
 statusShortsSchema.index({ createdAt: 1 });
+statusShortsSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+// Set expiresAt for status type (24 hours from creation)
+statusShortsSchema.pre('save', function(next) {
+  if (this.type === 'status' && !this.expiresAt) {
+    this.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  }
+  next();
+});
 
 module.exports = mongoose.model('StatusShorts', statusShortsSchema);
 

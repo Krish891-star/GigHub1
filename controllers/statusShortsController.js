@@ -97,6 +97,129 @@ exports.upload = async (req, res) => {
   }
 };
 
+// Upload story (status type only, auto-deletes after 24h)
+exports.uploadStory = async (req, res) => {
+  try {
+    const { caption } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Media file is required for stories' });
+    }
+
+    const mediaUrl = `/uploads/${req.file.filename}`;
+    const mediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
+
+    let user;
+    if (useMongoDB) {
+      user = await User.findById(req.user.id);
+    } else {
+      const inMemoryDB = authController.getInMemoryDB();
+      user = inMemoryDB.users.find(u => u.id === req.user.id);
+    }
+
+    if (useMongoDB) {
+      const story = new StatusShorts({
+        userId: req.user.id,
+        userName: user.name,
+        userAvatar: user.profileImage || '',
+        type: 'status',
+        caption,
+        mediaUrl,
+        mediaType,
+        expiresAt
+      });
+
+      await story.save();
+      res.status(201).json({ success: true, story });
+    } else {
+      const inMemoryDB = authController.getInMemoryDB();
+      const story = {
+        id: inMemoryDB.nextStatusShortsId++,
+        userId: req.user.id,
+        userName: user.name,
+        userAvatar: '',
+        type: 'status',
+        caption,
+        mediaUrl,
+        mediaType,
+        likes: [],
+        comments: [],
+        views: [],
+        viewCount: 0,
+        isDeleted: false,
+        expiresAt,
+        createdAt: new Date()
+      };
+
+      inMemoryDB.statusShorts.push(story);
+      res.status(201).json({ success: true, story });
+    }
+  } catch (err) {
+    console.error('Story upload error:', err);
+    res.status(500).json({ error: 'Server error during story upload' });
+  }
+};
+
+// Get active stories (only status type, less than 24h old)
+exports.getStories = async (req, res) => {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    let stories;
+    if (useMongoDB) {
+      // Group stories by userId and get latest from each user
+      stories = await StatusShorts.aggregate([
+        {
+          $match: {
+            type: 'status',
+            createdAt: { $gte: twentyFourHoursAgo },
+            isDeleted: false
+          }
+        },
+        { $sort: { userId: 1, createdAt: -1 } },
+        {
+          $group: {
+            _id: '$userId',
+            userName: { $first: '$userName' },
+            userAvatar: { $first: '$userAvatar' },
+            stories: { $push: '$$ROOT' }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]);
+    } else {
+      const inMemoryDB = authController.getInMemoryDB();
+      const activeStories = inMemoryDB.statusShorts.filter(s => {
+        return s.type === 'status' && 
+               new Date(s.createdAt) >= twentyFourHoursAgo && 
+               !s.isDeleted;
+      });
+
+      // Group by userId
+      const groupedStories = {};
+      activeStories.forEach(story => {
+        if (!groupedStories[story.userId]) {
+          groupedStories[story.userId] = {
+            userId: story.userId,
+            userName: story.userName,
+            userAvatar: story.userAvatar,
+            stories: []
+          };
+        }
+        groupedStories[story.userId].stories.push(story);
+      });
+
+      stories = Object.values(groupedStories);
+    }
+
+    res.json({ stories });
+  } catch (err) {
+    console.error('Get stories error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 exports.getFeed = async (req, res) => {
   try {
     const { page = 1, limit = 20, tab = 'latest', type } = req.query;

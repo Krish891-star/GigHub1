@@ -35,6 +35,7 @@ const notificationController = require('./controllers/notificationController');
 const bookmarkController = require('./controllers/bookmarkController');
 const searchController = require('./controllers/searchController');
 const analyticsController = require('./controllers/analyticsController');
+const userController = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -159,6 +160,7 @@ connectDB()
     bookmarkController.setMongoDBStatus(useMongoDB);
     searchController.setMongoDBStatus(true); // Search works with both
     analyticsController.setMongoDBStatus(useMongoDB);
+    userController.setMongoDBStatus(useMongoDB);
   })
   .catch(err => {
     useMongoDB = false;
@@ -169,6 +171,7 @@ connectDB()
     followController.setMongoDBStatus(false);
     notificationController.setMongoDBStatus(false);
     bookmarkController.setMongoDBStatus(false);
+    userController.setMongoDBStatus(false);
   });
 
 // In-memory fallback storage
@@ -191,12 +194,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/status-shorts', statusShortsRoutes);
 app.use('/api/creators', creatorRoutes);
-app.use('/api/users', followRoutes);
+app.use('/api/follow', followRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 
 // ==========================================
 // DASHBOARD ROUTES
@@ -251,6 +254,24 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // ==========================================
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve manifest.json with correct content type
+app.get('/manifest.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/manifest+json');
+  res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
+});
+
+// Serve favicon.ico with correct content type
+app.get('/favicon.ico', (req, res) => {
+  res.setHeader('Content-Type', 'image/x-icon');
+  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
+
+// Serve service worker with correct content type
+app.get('/sw.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'public', 'sw.js'));
 });
 
 app.get('/diagnostic', (req, res) => {
