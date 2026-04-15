@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GigHub — Owner Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1a;--card:#1a1a2e;--card2:#16213e;--border:#2a2a4a;
+  --accent:#e53e3e;--accent2:#f6ad55;--green:#48bb78;--blue:#63b3ed;
+  --text:#e2e8f0;--muted:#718096;--grad:linear-gradient(135deg,#e53e3e,#f6ad55);
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;}
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s;}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo .crown{font-size:1.8rem;margin-bottom:6px;}
+.sidebar-logo h1{font-size:1.1rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sidebar-logo p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.nav-links{flex:1;padding:16px 12px;overflow-y:auto;}
+.nav-link{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:.9rem;font-weight:600;transition:all .2s;margin-bottom:4px;border:none;background:none;width:100%;text-align:left;}
+.nav-link:hover{background:rgba(229,62,62,.1);color:var(--text);}
+.nav-link.active{background:rgba(229,62,62,.15);color:var(--accent);border-left:3px solid var(--accent);}
+.nav-link i{width:18px;text-align:center;font-size:1rem;}
+.nav-divider{height:1px;background:var(--border);margin:12px 0;}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border);}
+.owner-badge{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(229,62,62,.1);border-radius:10px;border:1px solid rgba(229,62,62,.3);}
+.owner-badge .avatar{width:36px;height:36px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem;color:#fff;flex-shrink:0;}
+.owner-badge .info{flex:1;min-width:0;}
+.owner-badge .name{font-size:.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.owner-badge .role{font-size:.7rem;color:var(--accent);}
+/* MAIN */
+.main{margin-left:240px;min-height:100vh;padding:24px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.topbar h2{font-size:1.4rem;font-weight:800;}
+.topbar-right{display:flex;gap:10px;align-items:center;}
+.btn{padding:9px 18px;border-radius:9px;border:none;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
+.btn-danger{background:var(--accent);color:#fff;}
+.btn-danger:hover{background:#c53030;}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:hover{background:rgba(255,255,255,.12);}
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.red::before{background:var(--accent);}
+.stat-card.orange::before{background:var(--accent2);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-icon{font-size:1.8rem;margin-bottom:10px;}
+.stat-val{font-size:2rem;font-weight:800;line-height:1;}
+.stat-label{font-size:.8rem;color:var(--muted);margin-top:4px;}
+/* CONTENT CARD */
+.content-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.card-header h3{font-size:1rem;font-weight:700;}
+.search-box{position:relative;flex:1;max-width:280px;}
+.search-box input{width:100%;padding:8px 12px 8px 36px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.85rem;outline:none;}
+.search-box input:focus{border-color:var(--accent);}
+.search-box i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;}
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;}
+.data-table th{padding:12px 16px;text-align:left;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+.data-table td{padding:13px 16px;font-size:.88rem;border-bottom:1px solid rgba(42,42,74,.5);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,255,255,.02);}
+.avatar-cell{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;color:#fff;flex-shrink:0;}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:700;}
+.badge-owner{background:rgba(246,173,85,.15);color:var(--accent2);}
+.badge-creator{background:rgba(99,179,237,.15);color:var(--blue);}
+.badge-user{background:rgba(113,128,150,.15);color:var(--muted);}
+.badge-post{background:rgba(72,187,120,.15);color:var(--green);}
+.badge-short{background:rgba(229,62,62,.15);color:var(--accent);}
+.badge-video{background:rgba(99,179,237,.15);color:var(--blue);}
+.del-btn{padding:5px 12px;background:rgba(229,62,62,.1);border:1px solid rgba(229,62,62,.3);color:var(--accent);border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.del-btn:hover{background:var(--accent);color:#fff;}
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border);}
+.pagination-info{font-size:.82rem;color:var(--muted);}
+.page-btns{display:flex;gap:6px;}
+.page-btn{padding:5px 11px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.page-btn:hover{border-color:var(--accent);color:var(--accent);}
+.page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+/* EMPTY */
+.empty-state{padding:60px 20px;text-align:center;color:var(--muted);}
+.empty-state i{font-size:2.5rem;margin-bottom:12px;display:block;}
+/* LOADING */
+.spinner{display:inline-block;width:20px;height:20px;border:2.5px solid rgba(229,62,62,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-row td{text-align:center;padding:40px;color:var(--muted);}
+/* CONFIRM MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:400px;width:90%;text-align:center;}
+.modal-box .modal-icon{font-size:2.5rem;margin-bottom:12px;}
+.modal-box h3{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.modal-box p{font-size:.88rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.modal-btns{display:flex;gap:10px;justify-content:center;}
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;font-size:.88rem;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:#276749;color:#9ae6b4;border:1px solid #2f855a;}
+.toast.error{background:#742a2a;color:#feb2b2;border:1px solid #9b2c2c;}
+/* MOBILE */
+.hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.4rem;cursor:pointer;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;}
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:700px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-overlay.show{display:block;}
+  .main{margin-left:0;padding:16px;}
+  .hamburger{display:block;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .stat-val{font-size:1.5rem;}
+  .data-table th:nth-child(3),.data-table td:nth-child(3){display:none;}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="crown">👑</div>
+    <h1>Owner Dashboard</h1>
+    <p>GigHub Control Panel</p>
+  </div>
+  <nav class="nav-links">
+    <button class="nav-link active" onclick="showTab('overview')" id="nav-overview"><i class="fas fa-chart-pie"></i> Overview</button>
+    <button class="nav-link" onclick="showTab('users')" id="nav-users"><i class="fas fa-users"></i> All Users</button>
+    <button class="nav-link" onclick="showTab('posts')" id="nav-posts"><i class="fas fa-th-large"></i> All Posts</button>
+    <button class="nav-link" onclick="showTab('shorts')" id="nav-shorts"><i class="fas fa-film"></i> Shorts & Status</button>
+    <div class="nav-divider"></div>
+    <button class="nav-link" onclick="goToApp()"><i class="fas fa-globe"></i> View App</button>
+    <button class="nav-link" onclick="doLogout()" style="color:#e53e3e;"><i class="fas fa-sign-out-alt"></i> Logout</button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="owner-badge">
+      <div class="avatar" id="ownerAvatar">K</div>
+      <div class="info">
+        <div class="name" id="ownerName">Krish Kumar</div>
+        <div class="role">👑 Owner</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="hamburger" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+      <h2 id="pageTitle">Overview</h2>
+    </div>
+    <div class="topbar-right">
+      <span id="dbStatus" style="font-size:.78rem;padding:4px 10px;border-radius:6px;background:rgba(72,187,120,.15);color:#48bb78;font-weight:700;">● Live</span>
+      <button class="btn btn-ghost" onclick="refreshCurrent()"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div id="tab-overview">
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card red"><div class="stat-icon">👥</div><div class="stat-val" id="s-users">—</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card orange"><div class="stat-icon">📝</div><div class="stat-val" id="s-posts">—</div><div class="stat-label">Total Posts</div></div>
+      <div class="stat-card green"><div class="stat-icon">🎬</div><div class="stat-val" id="s-shorts">—</div><div class="stat-label">Shorts & Status</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🎨</div><div class="stat-val" id="s-creators">—</div><div class="stat-label">Creators</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="content-card">
+        <div class="card-header"><h3>🕐 Recent Users</h3></div>
+        <table class="data-table"><thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+        <tbody id="recentUsers"><tr class="loading-row"><td colspan="3"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+      <div class="content-card">
+        <div class="card-header"><h3>🕐 Recent Posts</h3></div>
+        <table class="data-table"><thead><tr><th>Post</th><th>Type</th><th>Date</th></tr></thead>
+        <tbody id="recentPosts"><tr class="loading-row"><td colspan="3"><span class="spinner"></span></td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- USERS TAB -->
+  <div id="tab-users" style="display:none;">
+    <div class="content-card">
+      <div class="card-header">
+        <h3>All Users</h3>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="userSearch" placeholder="Search name, phone, email..." oninput="debounceSearch('users')"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>User</th><th>Phone</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody id="usersBody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="pagination-info" id="usersPagInfo"></span><div class="page-btns" id="usersPag"></div></div>
+    </div>
+  </div>
+
+  <!-- POSTS TAB -->
+  <div id="tab-posts" style="display:none;">
+    <div class="content-card">
+      <div class="card-header">
+        <h3>All Posts</h3>
+        <div class="search-box"><i class="fas fa-search"></i><input type="text" id="postSearch" placeholder="Search title, username..." oninput="debounceSearch('posts')"></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Post</th><th>By</th><th>Type</th><th>Engagement</th><th>Action</th></tr></thead>
+          <tbody id="postsBody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="pagination-info" id="postsPagInfo"></span><div class="page-btns" id="postsPag"></div></div>
+    </div>
+  </div>
+
+  <!-- SHORTS TAB -->
+  <div id="tab-shorts" style="display:none;">
+    <div class="content-card">
+      <div class="card-header"><h3>Shorts & Status</h3></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead><tr><th>Media</th><th>By</th><th>Type</th><th>Stats</th><th>Action</th></tr></thead>
+          <tbody id="shortsBody"><tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination"><span class="pagination-info" id="shortsPagInfo"></span><div class="page-btns" id="shortsPag"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modalIcon">⚠️</div>
+    <h3 id="modalTitle">Confirm Delete</h3>
+    <p id="modalMsg">Are you sure?</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn" onclick="confirmAction()"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.location.origin;
+const OWNER_PHONE = '8410104406';
+let token = localStorage.getItem('token');
+let user = JSON.parse(localStorage.getItem('user') || '{}');
+let currentTab = 'overview';
+let pages = { users: 1, posts: 1, shorts: 1 };
+let totals = { users: 0, posts: 0, shorts: 0 };
+let pendingAction = null;
+let searchTimers = {};
+
+// ── GUARD ──────────────────────────────────────────────
+(function guard() {
+  if (!token || !user) { window.location.href = '/login'; return; }
+  const isOwner = user.isOwner || user.role === 'owner' || user.phone === OWNER_PHONE;
+  if (!isOwner) { window.location.href = '/'; return; }
+  const n = document.getElementById('ownerName');
+  const a = document.getElementById('ownerAvatar');
+  if (n) n.textContent = user.name || 'Owner';
+  if (a) a.textContent = (user.name || 'O').charAt(0).toUpperCase();
+})();
+
+// ── HELPERS ────────────────────────────────────────────
+function authH() { return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }; }
+
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function roleBadge(r) {
+  const map = { owner:'badge-owner', creator:'badge-creator', user:'badge-user' };
+  return `<span class="badge ${map[r]||'badge-user'}">${esc(r)}</span>`;
+}
+
+// ── SIDEBAR ────────────────────────────────────────────
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+function goToApp() { window.open('/', '_blank'); }
+function doLogout() {
+  localStorage.removeItem('token'); localStorage.removeItem('user');
+  localStorage.removeItem('appTermsAccepted');
+  window.location.href = '/login';
+}
+
+// ── TABS ───────────────────────────────────────────────
+function showTab(tab) {
+  currentTab = tab;
+  ['overview','users','posts','shorts'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+    const n = document.getElementById('nav-' + t);
+    if (n) n.classList.toggle('active', t === tab);
+  });
+  const titles = { overview:'Overview', users:'All Users', posts:'All Posts', shorts:'Shorts & Status' };
+  document.getElementById('pageTitle').textContent = titles[tab] || tab;
+  closeSidebar();
+  if (tab === 'overview') loadOverview();
+  else if (tab === 'users') loadUsers();
+  else if (tab === 'posts') loadPosts();
+  else if (tab === 'shorts') loadShorts();
+}
+
+function refreshCurrent() { showTab(currentTab); }
+
+// ── SEARCH DEBOUNCE ────────────────────────────────────
+function debounceSearch(type) {
+  clearTimeout(searchTimers[type]);
+  searchTimers[type] = setTimeout(() => {
+    pages[type] = 1;
+    if (type === 'users') loadUsers();
+    else if (type === 'posts') loadPosts();
+  }, 350);
+}
+
+// ── OVERVIEW ───────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const r = await fetch(`${API}/api/admin/stats`, { headers: authH() });
+    if (!r.ok) { toast('Failed to load stats', 'error'); return; }
+    const { stats } = await r.json();
+    document.getElementById('s-users').textContent = stats.totalUsers ?? '—';
+    document.getElementById('s-posts').textContent = stats.totalPosts ?? '—';
+    document.getElementById('s-shorts').textContent = stats.totalShorts ?? '—';
+    document.getElementById('s-creators').textContent = stats.totalCreators ?? '—';
+  } catch { toast('Network error', 'error'); }
+
+  // Recent users
+  try {
+    const r = await fetch(`${API}/api/admin/users?limit=5&page=1`, { headers: authH() });
+    const d = await r.json();
+    const tb = document.getElementById('recentUsers');
+    tb.innerHTML = (d.users || []).map(u => `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:8px;">
+          <div class="avatar-cell">${esc((u.name||'?').charAt(0).toUpperCase())}</div>
+          <span style="font-weight:600;">${esc(u.name)}</span>
+        </div></td>
+        <td>${roleBadge(u.role)}</td>
+        <td style="color:var(--muted);font-size:.8rem;">${fmtDate(u.createdAt)}</td>
+      </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px;">No users</td></tr>';
+  } catch {}
+
+  // Recent posts
+  try {
+    const r = await fetch(`${API}/api/admin/posts?limit=5&page=1`, { headers: authH() });
+    const d = await r.json();
+    const tb = document.getElementById('recentPosts');
+    tb.innerHTML = (d.posts || []).map(p => `
+      <tr>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.title||p.caption||'Untitled')}</td>
+        <td><span class="badge badge-post">${esc(p.postType||'post')}</span></td>
+        <td style="color:var(--muted);font-size:.8rem;">${fmtDate(p.createdAt)}</td>
+      </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px;">No posts</td></tr>';
+  } catch {}
+}
+
+// ── USERS ──────────────────────────────────────────────
+async function loadUsers(page) {
+  if (page) pages.users = page;
+  const search = document.getElementById('userSearch')?.value || '';
+  const tb = document.getElementById('usersBody');
+  tb.innerHTML = '<tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr>';
+  try {
+    const params = new URLSearchParams({ page: pages.users, limit: 15, ...(search ? { search } : {}) });
+    const r = await fetch(`${API}/api/admin/users?${params}`, { headers: authH() });
+    if (!r.ok) { tb.innerHTML = '<tr class="loading-row"><td colspan="5" style="color:var(--accent);">Access denied</td></tr>'; return; }
+    const { users, total } = await r.json();
+    totals.users = total;
+    tb.innerHTML = users.length ? users.map(u => `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+          <div class="avatar-cell">${esc((u.name||'?').charAt(0).toUpperCase())}</div>
+          <div><div style="font-weight:600;">${esc(u.name)} ${u.isOwner ? '<span class="badge badge-owner">OWNER</span>' : ''}</div>
+          <div style="font-size:.75rem;color:var(--muted);">${esc(u.email||'No email')}</div></div>
+        </div></td>
+        <td style="font-size:.85rem;">${esc(u.phone||'—')}</td>
+        <td>${roleBadge(u.role)}</td>
+        <td style="color:var(--muted);font-size:.82rem;">${fmtDate(u.createdAt)}</td>
+        <td>${u.isOwner ? '<span style="color:var(--muted);font-size:.78rem;">Protected</span>' :
+          `<button class="del-btn" onclick="askDelete('user','${u._id}','${esc(u.name)}')"><i class="fas fa-trash"></i> Delete</button>`}</td>
+      </tr>`).join('') : '<tr class="loading-row"><td colspan="5">No users found</td></tr>';
+    renderPag('users', total, 15, pages.users);
+  } catch { tb.innerHTML = '<tr class="loading-row"><td colspan="5" style="color:var(--accent);">Error loading users</td></tr>'; }
+}
+
+// ── POSTS ──────────────────────────────────────────────
+async function loadPosts(page) {
+  if (page) pages.posts = page;
+  const search = document.getElementById('postSearch')?.value || '';
+  const tb = document.getElementById('postsBody');
+  tb.innerHTML = '<tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr>';
+  try {
+    const params = new URLSearchParams({ page: pages.posts, limit: 15, ...(search ? { search } : {}) });
+    const r = await fetch(`${API}/api/admin/posts?${params}`, { headers: authH() });
+    const { posts, total } = await r.json();
+    totals.posts = total;
+    tb.innerHTML = posts.length ? posts.map(p => `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+          ${p.images?.[0] ? `<img src="${API}${p.images[0]}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` :
+            `<div style="width:40px;height:40px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${p.videoUrl?'🎬':'📝'}</div>`}
+          <div style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">${esc(p.title||p.caption||'Untitled')}</div>
+        </div></td>
+        <td style="font-size:.85rem;">${esc(p.userName||'—')}</td>
+        <td><span class="badge badge-post">${esc(p.postType||'post')}</span></td>
+        <td style="font-size:.82rem;color:var(--muted);">❤️ ${(p.likes||[]).length} &nbsp;💬 ${(p.comments||[]).length}</td>
+        <td><button class="del-btn" onclick="askDelete('post','${p._id}','${esc((p.title||p.caption||'this post').replace(/'/g,''))}')"><i class="fas fa-trash"></i> Delete</button></td>
+      </tr>`).join('') : '<tr class="loading-row"><td colspan="5">No posts found</td></tr>';
+    renderPag('posts', total, 15, pages.posts);
+  } catch { tb.innerHTML = '<tr class="loading-row"><td colspan="5" style="color:var(--accent);">Error loading posts</td></tr>'; }
+}
+
+// ── SHORTS ─────────────────────────────────────────────
+async function loadShorts(page) {
+  if (page) pages.shorts = page;
+  const tb = document.getElementById('shortsBody');
+  tb.innerHTML = '<tr class="loading-row"><td colspan="5"><span class="spinner"></span></td></tr>';
+  try {
+    const params = new URLSearchParams({ page: pages.shorts, limit: 15 });
+    const r = await fetch(`${API}/api/admin/shorts?${params}`, { headers: authH() });
+    const { shorts, total } = await r.json();
+    totals.shorts = total;
+    tb.innerHTML = shorts.length ? shorts.map(s => `
+      <tr>
+        <td><div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:40px;height:40px;border-radius:8px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">${s.mediaType==='video'?'🎬':'🖼️'}</div>
+          <div style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.caption||'No caption')}</div>
+        </div></td>
+        <td style="font-size:.85rem;">${esc(s.userName||'—')}</td>
+        <td><span class="badge ${s.type==='shorts'?'badge-short':'badge-video'}">${esc(s.type)}</span></td>
+        <td style="font-size:.82rem;color:var(--muted);">❤️ ${(s.likes||[]).length} &nbsp;👁️ ${s.viewCount||0}</td>
+        <td><button class="del-btn" onclick="askDelete('short','${s._id}','this short')"><i class="fas fa-trash"></i> Delete</button></td>
+      </tr>`).join('') : '<tr class="loading-row"><td colspan="5">No shorts found</td></tr>';
+    renderPag('shorts', total, 15, pages.shorts);
+  } catch { tb.innerHTML = '<tr class="loading-row"><td colspan="5" style="color:var(--accent);">Error loading shorts</td></tr>'; }
+}
+
+// ── PAGINATION ─────────────────────────────────────────
+function renderPag(type, total, limit, current) {
+  const totalPages = Math.ceil(total / limit);
+  const info = document.getElementById(type + 'PagInfo');
+  const pag = document.getElementById(type + 'Pag');
+  if (info) info.textContent = `${total} total · Page ${current} of ${totalPages||1}`;
+  if (!pag) return;
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  let html = '';
+  const start = Math.max(1, current - 2), end = Math.min(totalPages, current + 2);
+  if (start > 1) html += `<button class="page-btn" onclick="load${type.charAt(0).toUpperCase()+type.slice(1)}(1)">1</button>${start>2?'<span style="color:var(--muted);padding:0 4px;">…</span>':''}`;
+  for (let i = start; i <= end; i++) html += `<button class="page-btn${i===current?' active':''}" onclick="load${type.charAt(0).toUpperCase()+type.slice(1)}(${i})">${i}</button>`;
+  if (end < totalPages) html += `${end<totalPages-1?'<span style="color:var(--muted);padding:0 4px;">…</span>':''}<button class="page-btn" onclick="load${type.charAt(0).toUpperCase()+type.slice(1)}(${totalPages})">${totalPages}</button>`;
+  pag.innerHTML = html;
+}
+
+// ── DELETE FLOW ────────────────────────────────────────
+function askDelete(type, id, name) {
+  pendingAction = { type, id, name };
+  document.getElementById('modalIcon').textContent = '🗑️';
+  document.getElementById('modalTitle').textContent = type === 'user' ? 'Delete User?' : type === 'post' ? 'Delete Post?' : 'Delete Short?';
+  document.getElementById('modalMsg').textContent = type === 'user'
+    ? `Delete "${name}" and ALL their posts, shorts, and data? This cannot be undone.`
+    : `Delete "${name}"? This cannot be undone.`;
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+  pendingAction = null;
+}
+
+async function confirmAction() {
+  if (!pendingAction) return;
+  const { type, id } = pendingAction;
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  closeModal();
+  const endpoints = { user: 'users', post: 'posts', short: 'shorts' };
+  try {
+    const r = await fetch(`${API}/api/admin/${endpoints[type]}/${id}`, { method: 'DELETE', headers: authH() });
+    const d = await r.json();
+    if (r.ok) {
+      toast(d.message || 'Deleted successfully', 'success');
+      if (type === 'user') loadUsers();
+      else if (type === 'post') loadPosts();
+      else loadShorts();
+      loadOverview();
+    } else { toast(d.error || 'Delete failed', 'error'); }
+  } catch { toast('Network error', 'error'); }
+  btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+  btn.disabled = false;
+}
+
+// ── INIT ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadOverview();
+});
+</script>
+</body>
+</html>

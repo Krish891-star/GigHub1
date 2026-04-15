@@ -4,7 +4,7 @@ let currentUser = null;
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, checking auth...');
-  
+
   try {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = user;
     console.log('User authenticated:', user.name);
 
+    // Show owner nav button — check isOwner flag OR phone number directly
+    const OWNER_PHONE = '8410104406';
+    if (user.isOwner || user.role === 'owner' || user.phone === OWNER_PHONE) {
+      const adminBtn = document.getElementById('adminNavBtn');
+      if (adminBtn) adminBtn.style.display = 'flex';
+      // Patch currentUser so admin functions work
+      currentUser.isOwner = true;
+    }
+
     // Update profile section safely
     const profileUsername = document.getElementById('profileUsername');
     const profileAvatar = document.getElementById('profileAvatar');
@@ -27,19 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (profileAvatar) profileAvatar.textContent = user.name.charAt(0).toUpperCase();
     if (profileName) profileName.textContent = user.name;
 
-    // Load feed by default
-    setTimeout(() => {
-      console.log('Initializing app...');
-      try {
-        loadFeed();
-        loadStories();
-        loadDashboard();
-        updateNotificationBadge(); // Update notification badge on load
-        console.log('App initialized successfully');
-      } catch (err) {
-        console.error('Error during initialization:', err);
-      }
-    }, 300);
+    // Load feed immediately
+    console.log('Initializing app...');
+    try {
+      loadFeed();
+      loadStories();
+      loadDashboard(); // non-blocking background load
+      updateNotificationBadge();
+      setInterval(updateNotificationBadge, 15000); // Poll every 15s for faster notification updates
+    } catch (err) {
+      console.error('Error during initialization:', err);
+    }
   } catch (err) {
     console.error('Auth check error:', err);
     window.location.href = '/login';
@@ -82,7 +89,8 @@ function showSection(sectionName) {
       'explore': 1,
       'create': 2,
       'creators': 3,
-      'profile': 4
+      'profile': 4,
+      'admin': 5
     };
 
     // Update bottom navigation
@@ -109,6 +117,9 @@ function showSection(sectionName) {
         break;
       case 'create':
         console.log('Create post section ready');
+        break;
+      case 'admin':
+        loadAdminPanel();
         break;
     }
 
@@ -396,7 +407,7 @@ function getTimeAgo(date) {
 }
 
 function viewStory(postId) {
-  showSection('reels');
+  showSection('feed');
   // Could implement story viewer modal here
 }
 
@@ -717,20 +728,198 @@ function viewCreatorStories(creatorId) {
 
 async function loadFeed() {
   try {
-    const response = await fetch(`${API_URL}/api/posts?status=open`);
-    const data = await response.json();
+    const [postsRes, reelsRes] = await Promise.all([
+      fetch(`${API_URL}/api/posts`),
+      fetch(`${API_URL}/api/status-shorts/feed?tab=latest&limit=30&type=shorts`)
+    ]);
 
-    if (response.ok) {
-      displayFeed(data.posts);
-    }
+    const postsData = postsRes.ok ? await postsRes.json() : { posts: [] };
+    const reelsData = reelsRes.ok ? await reelsRes.json() : { posts: [] };
+
+    console.log('[Feed] posts:', (postsData.posts||[]).length, '| shorts raw:', (reelsData.posts||[]).length);
+
+    // Shorts = only type:'shorts' from StatusShorts collection
+    const shorts = (reelsData.posts || []).filter(p => p.type === 'shorts');
+    console.log('[Feed] shorts after filter:', shorts.length);
+
+    // Regular posts feed = all Post documents, sorted newest first
+    const feedItems = (postsData.posts || [])
+      .map(p => ({ ...p, _feedType: 'post' }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    // Store for filter
+    _allFeedPosts = feedItems;
+
+    // Render shorts row at top
+    renderShortsRow(shorts);
+
+    // Render vertical posts feed (apply current filter)
+    const filtered = _feedFilter === 'all' ? feedItems : feedItems.filter(p => p.category === _feedFilter);
+    displayFeed(filtered);
   } catch (err) {
     console.error('Error loading feed:', err);
   }
 }
 
-function displayFeed(posts) {
-  const container = document.getElementById('feedContainer');
+// All shorts for viewer
+let _allShorts = [];
+let _svIndex = 0;
 
+// Feed filter state
+let _feedFilter = 'all';
+let _allFeedPosts = [];
+
+function setFeedFilter(category, btn) {
+  _feedFilter = category;
+  document.querySelectorAll('.feed-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const filtered = category === 'all' ? _allFeedPosts : _allFeedPosts.filter(p => p.category === category);
+  displayFeed(filtered);
+}
+
+// Scroll to top button visibility
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (btn) btn.style.display = window.scrollY > 400 ? 'flex' : 'none';
+}, { passive: true });
+
+function renderShortsRow(shorts) {
+  _allShorts = shorts;
+  const row = document.getElementById('shortsRow');
+  const wrap = document.getElementById('shortsRowWrap');
+  console.log('[Shorts] row el:', !!row, '| wrap el:', !!wrap, '| count:', shorts?.length);
+  if (!row || !wrap) return;
+
+  if (!shorts || shorts.length === 0) {
+    wrap.classList.remove('visible');
+    row.innerHTML = '';
+    return;
+  }
+
+  // Force show via class
+  wrap.classList.add('visible');
+
+  row.innerHTML = shorts.map((s, i) => {
+    const src = `${API_URL}${s.mediaUrl || ''}`;
+    const isVideo = s.mediaType === 'video';
+    return `
+    <div class="short-thumb" onclick="openShortsViewer(${i})">
+      ${isVideo
+        ? `<video src="${src}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video>`
+        : `<img src="${src}" alt="short" loading="lazy">`}
+      <div class="short-thumb-overlay">
+        <div class="short-thumb-user">@${escapeHtml(s.userName || 'user')}</div>
+        ${s.caption ? `<div class="short-thumb-caption">${escapeHtml(s.caption)}</div>` : ''}
+      </div>
+      <div class="short-play-icon"><i class="fas fa-play"></i></div>
+    </div>`;
+  }).join('');
+  console.log('[Shorts] row rendered, count:', shorts.length);
+}
+function openShortsViewer(index) {
+  _svIndex = index;
+  const modal = document.getElementById('shortsViewerModal');
+  if (!modal) return;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  _loadShortsViewerItem();
+  _initShortsSwipe();
+}
+
+function closeShortsViewer() {
+  const modal = document.getElementById('shortsViewerModal');
+  if (modal) modal.classList.remove('open');
+  const v = document.getElementById('shortsViewerVideo');
+  if (v) { v.pause(); v.src = ''; }
+  document.body.style.overflow = '';
+}
+
+function _loadShortsViewerItem() {
+  const s = _allShorts[_svIndex];
+  if (!s) return;
+  const v = document.getElementById('shortsViewerVideo');
+  const user = document.getElementById('svUser');
+  const cap = document.getElementById('svCap');
+  const lc = document.getElementById('svLikeCount');
+  const cc = document.getElementById('svCommentCount');
+  if (v) {
+    v.pause();
+    v.src = `${API_URL}${s.mediaUrl || ''}`;
+    v.load();
+    v.play().catch(() => {});
+  }
+  if (user) user.textContent = '@' + (s.userName || 'user');
+  if (cap) cap.textContent = s.caption || '';
+  if (lc) lc.textContent = (s.likes || []).length;
+  if (cc) cc.textContent = (s.comments || []).length;
+  // Update progress dots
+  _updateSvDots();
+  // Track view
+  const token = localStorage.getItem('token');
+  if (token && s._id) {
+    fetch(`${API_URL}/api/status-shorts/${s._id}/view`, {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token }
+    }).catch(() => {});
+  }
+}
+
+function _updateSvDots() {
+  const dots = document.getElementById('svDots');
+  if (!dots || _allShorts.length <= 1) { if (dots) dots.innerHTML = ''; return; }
+  const max = Math.min(_allShorts.length, 8);
+  dots.innerHTML = Array.from({ length: max }, (_, i) =>
+    `<div style="width:6px;height:6px;border-radius:50%;background:${i === _svIndex % max ? '#fff' : 'rgba(255,255,255,.4)'};transition:background .2s;"></div>`
+  ).join('');
+}
+
+// Touch swipe support for shorts viewer
+let _svTouchStartY = 0;
+function _initShortsSwipe() {
+  const inner = document.getElementById('shortsViewerInner');
+  if (!inner || inner._swipeInit) return;
+  inner._swipeInit = true;
+  inner.addEventListener('touchstart', (e) => { _svTouchStartY = e.touches[0].clientY; }, { passive: true });
+  inner.addEventListener('touchend', (e) => {
+    const dy = _svTouchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dy) > 50) svNav(dy > 0 ? 1 : -1);
+  }, { passive: true });
+  // Keyboard support
+  document.addEventListener('keydown', _svKeyHandler);
+}
+function _svKeyHandler(e) {
+  const modal = document.getElementById('shortsViewerModal');
+  if (!modal || !modal.classList.contains('open')) return;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') svNav(-1);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') svNav(1);
+  if (e.key === 'Escape') closeShortsViewer();
+}
+
+function svNav(dir) {
+  _svIndex = Math.max(0, Math.min(_allShorts.length - 1, _svIndex + dir));
+  _loadShortsViewerItem();
+}
+
+function svLike() {
+  const s = _allShorts[_svIndex];
+  if (!s) return;
+  likeReel(s._id || s.id, document.getElementById('svLikeBtn'));
+}
+
+function svComment() {
+  const s = _allShorts[_svIndex];
+  if (!s) return;
+  closeShortsViewer();
+  setTimeout(() => toggleReelComments(s._id || s.id), 300);
+}
+
+function svShare() {
+  const s = _allShorts[_svIndex];
+  if (!s) return;
+  sharePost(s._id || s.id, s.caption || 'Check this out on GigHub');
+}
+
+function displayFeed(posts, containerId) {
+  const container = document.getElementById(containerId || 'feedContainer');
   if (!posts || posts.length === 0) {
     container.innerHTML = `
       <div class="post-card" style="padding: 40px; text-align: center;">
@@ -746,141 +935,117 @@ function displayFeed(posts) {
   container.innerHTML = posts.map((post, index) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const isLiked = post.likes && post.likes.includes(user.id);
-    
-    // CRITICAL FIX: Provide defaults for old posts that don't have new fields
+
+    // All items in feed are Post documents now
+    // postType is either 'post' (traditional) or 'video'
     const postType = post.postType || 'post';
+    const isVideoPost = postType === 'video';
     const videoUrl = post.videoUrl || '';
     const mediaType = post.mediaType || 'image';
-    const caption = post.caption || '';
-    
-    // Determine media display based on post type
+    const caption = post.caption || post.description || '';
+
+    // Media display
     let mediaHTML = '';
-    if (postType === 'post') {
-      // Traditional post with images
-      if (post.images && post.images.length > 0) {
-        mediaHTML = `<img src="${API_URL}${post.images[0]}" class="post-image" alt="${escapeHtml(post.title || 'Post')}">`;
-      } else {
-        mediaHTML = `
-          <div style="width: 100%; height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;">
-            <i class="fas fa-briefcase"></i>
-          </div>
-        `;
-      }
-    } else if (postType === 'reel' || postType === 'short' || postType === 'video') {
-      // Video post
-      if (videoUrl) {
-        mediaHTML = `
-          <video src="${API_URL}${videoUrl}" class="post-video" controls preload="metadata" style="width: 100%; max-height: 600px; background: black;"></video>
-        `;
-      } else if (post.images && post.images.length > 0) {
-        mediaHTML = `<img src="${API_URL}${post.images[0]}" class="post-image" alt="${escapeHtml(post.title || caption || 'Post')}">`;
-      }
+    if (isVideoPost && videoUrl) {
+      mediaHTML = `
+        <div class="video-container">
+          <video src="${API_URL}${videoUrl}" controls playsinline preload="metadata"
+            style="width:100%;max-height:560px;object-fit:contain;background:#000;display:block;"></video>
+        </div>`;
+    } else if (post.images && post.images.length > 0) {
+      mediaHTML = `
+        <div style="position:relative;" ondblclick="likePost('${post._id||post.id}',this.querySelector('.like-dbl-btn'));showDoubleTapHeart(this)">
+          <img src="${API_URL}${post.images[0]}" class="post-image" alt="${escapeHtml(post.title || 'Post')}" loading="lazy">
+          <button class="like-dbl-btn action-btn ${isLiked?'liked':''}" style="display:none;" data-post-id="${post._id||post.id}"></button>
+          <div class="dbl-heart" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4rem;pointer-events:none;animation:heartPop .6s ease forwards;">❤️</div>
+        </div>`;
+    } else if (isVideoPost) {
+      mediaHTML = `<div style="width:100%;height:200px;background:#000;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;"><i class="fas fa-video"></i></div>`;
+    } else {
+      mediaHTML = `<div style="width:100%;height:180px;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:3rem;"><i class="fas fa-briefcase"></i></div>`;
     }
-    
-    // Determine caption/description
+
+    // Caption / description
     let captionHTML = '';
     if (postType === 'post') {
-      captionHTML = `
-        <div class="post-caption">
-          <strong>${escapeHtml(post.userName || 'Anonymous')}</strong>
-          ${escapeHtml(post.description || '')}
-        </div>
-      `;
-      // Show budget only if it exists
-      if (post.budget) {
-        captionHTML += `<div class="post-budget">💰 ${escapeHtml(post.budget)}</div>`;
-      }
-    } else {
-      // Reel/Short/Video with caption
-      if (caption || post.description) {
-        captionHTML = `
-          <div class="post-caption">
-            <strong>${escapeHtml(post.userName || 'Anonymous')}</strong>
-            ${escapeHtml(caption || post.description || '')}
-          </div>
-        `;
-      }
+      if (post.description) captionHTML += `<div class="post-caption"><strong>${escapeHtml(post.userName || 'Anonymous')}</strong> ${escapeHtml(post.description)}</div>`;
+      if (post.budget) captionHTML += `<div class="post-budget">💰 ${escapeHtml(post.budget)}</div>`;
+    } else if (caption) {
+      captionHTML = `<div class="post-caption"><strong>${escapeHtml(post.userName || 'Anonymous')}</strong> ${escapeHtml(caption)}</div>`;
     }
-    
-    // Post type badge
-    let badgeHTML = '';
-    if (postType !== 'post') {
-      const badgeIcon = postType === 'reel' ? 'fa-film' : postType === 'short' ? 'fa-video' : 'fa-play-circle';
-      const badgeLabel = postType.charAt(0).toUpperCase() + postType.slice(1);
-      badgeHTML = `<div class="post-type-badge"><i class="fas ${badgeIcon}"></i> ${badgeLabel}</div>`;
-    }
-    
-    // Follow button (only if viewing someone else's post)
-    let followButtonHTML = '';
-    if (post.userId && post.userId !== user.id && user.id) {
-      followButtonHTML = `
-        <button class="follow-btn" onclick="followUser('${post.userId}', this)" style="margin-left: auto; padding: 4px 12px; font-size: 0.8rem;">
-          <i class="fas fa-user-plus"></i> Follow
-        </button>
-      `;
-    }
-    
-    // WhatsApp contact (only for traditional posts)
-    let contactHTML = '';
-    if (postType === 'post' && (post.userWhatsapp || post.userPhone)) {
-      contactHTML = `
-        <div class="post-contact">
-          <a href="https://wa.me/${(post.userWhatsapp || post.userPhone || '').replace(/[^0-9]/g, '')}" target="_blank" class="contact-btn">
-            <i class="fab fa-whatsapp"></i> Contact on WhatsApp
-          </a>
-          <span style="color: var(--text-secondary); font-size: 0.85rem;">
-            <i class="fas fa-phone"></i> ${escapeHtml(post.userPhone || 'N/A')}
-          </span>
-        </div>
-      `;
-    }
-    
+
+    // Video badge
+    const badgeHTML = isVideoPost
+      ? `<span style="background:var(--ig-gradient);color:#fff;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;margin-left:6px;">📹 Video</span>`
+      : '';
+
+    const postOwnerId = post.userId?._id || post.userId;
+    const isOwner = postOwnerId && postOwnerId.toString() === user.id.toString();
+    const followBtn = !isOwner && postOwnerId
+      ? `<button class="follow-btn" onclick="followUser('${postOwnerId}',this)" style="margin-left:auto;padding:5px 12px;font-size:.8rem;"><i class="fas fa-user-plus"></i> Follow</button>`
+      : '';
+    const deleteBtn = isOwner
+      ? `<button onclick="deletePost('${post._id || post.id}',this)" style="margin-left:auto;background:none;border:none;color:#ef4444;cursor:pointer;padding:4px 8px;" title="Delete"><i class="fas fa-trash-alt"></i></button>`
+      : '';
+
+    const contactHTML = (postType === 'post' && (post.userWhatsapp || post.userPhone))
+      ? `<div class="post-contact"><a href="https://wa.me/${(post.userWhatsapp||post.userPhone||'').replace(/[^0-9]/g,'')}" target="_blank" class="contact-btn"><i class="fab fa-whatsapp"></i> Contact on WhatsApp</a></div>`
+      : '';
+
+    const postId = post._id || post.id;
+
     return `
     <div class="post-card">
       <div class="post-header">
-        <div class="post-avatar">${(post.userName || 'A').charAt(0).toUpperCase()}</div>
-        <div class="post-user-info" style="flex: 1;">
-          <div class="post-username">${escapeHtml(post.userName || 'Anonymous')}</div>
-          <div class="post-category">${postType === 'post' ? formatCategory(post.category) : badgeHTML}</div>
+        <div class="post-avatar">${(post.userName||'A').charAt(0).toUpperCase()}</div>
+        <div class="post-user-info" style="flex:1;">
+          <div class="post-username">${escapeHtml(post.userName||'Anonymous')}${badgeHTML}</div>
+          <div class="post-category">${isVideoPost ? '📹 Video' : formatCategory(post.category)}</div>
         </div>
-        ${followButtonHTML}
+        ${followBtn}${deleteBtn}
       </div>
-
       ${mediaHTML}
-
       <div class="post-actions">
         <div class="post-actions-left">
-          <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="likePost('${post._id || post.id}', this)">
-            <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+          <button class="action-btn ${isLiked?'liked':''}" onclick="likePost('${postId}',this)">
+            <i class="${isLiked?'fas':'far'} fa-heart"></i>
           </button>
-          <button class="action-btn" onclick="toggleComments('${post._id || post.id}')">
+          <button class="action-btn" onclick="toggleComments('${postId}')">
             <i class="far fa-comment"></i>
           </button>
-          <button class="action-btn" onclick="sharePost('${post._id || post.id}', '${(post.title || caption || '').replace(/'/g, "\\'")}')">
+          <button class="action-btn" onclick="sharePost('${postId}','${(post.title||caption||'').replace(/'/g,"\\'")}')">
             <i class="far fa-paper-plane"></i>
           </button>
         </div>
-        <button class="action-btn" onclick="toggleBookmark('${post._id || post.id}', this)">
+        <button class="action-btn" onclick="toggleBookmark('${postId}',this)">
           <i class="far fa-bookmark"></i>
         </button>
       </div>
-
-      <div class="post-likes">${post.likes?.length || 0} likes</div>
-
+      <div class="post-likes">${post.likes?.length||0} likes</div>
       ${captionHTML}
-
-      ${post.comments && post.comments.length > 0 ? `
-        <div class="post-comments" onclick="toggleComments('${post._id || post.id}')">
-          View all ${post.comments.length} comments
-        </div>
-      ` : ''}
-
+      ${post.comments?.length > 0 ? `<div class="post-comments" onclick="toggleComments('${postId}')">View all ${post.comments.length} comments</div>` : ''}
       <div class="post-time">${formatDate(post.createdAt)}</div>
-
       ${contactHTML}
-    </div>
-  `;
+      <div id="post-comments-${postId}" class="comments-section" style="display:none;">
+        <h4 style="margin-bottom:12px;color:var(--ig-primary);">💬 Comments</h4>
+        <div id="post-comments-list-${postId}">
+          ${(post.comments||[]).map(c=>`<div class="comment-item"><strong>${escapeHtml(c.userName)}</strong><small style="float:right;">${formatDate(c.timestamp)}</small><p>${escapeHtml(c.text)}</p></div>`).join('')}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <input type="text" id="post-comment-input-${postId}" placeholder="Add a comment..." style="flex:1;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;">
+          <button class="btn-primary" onclick="addComment('${postId}')" style="padding:8px 16px;width:auto;">Post</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
+
+  // Auto-track views for visible videos
+  container.querySelectorAll('video').forEach((video, idx) => {
+    video.addEventListener('play', () => {
+      const postId = posts[idx]?._id || posts[idx]?.id;
+      if (postId) trackReelView(postId);
+    });
+  });
 }
 
 // ==========================================
@@ -960,114 +1125,129 @@ function setSearchType(type) {
   
   // Re-run search if there's a query
   const searchInput = document.getElementById('searchInput');
-  if (searchInput && searchInput.value.trim()) {
-    handleSearch({ key: 'Enter' });
+  if (searchInput && searchInput.value.trim().length >= 2) {
+    if (type === 'posts') searchPosts(searchInput.value.trim());
+    else searchCreators(searchInput.value.trim());
   }
 }
 
 // Handle search input
-async function handleSearch(event) {
-  // Search on Enter key or automatically after 2 characters
-  const query = event.target.value.trim();
-  
-  if (query.length < 2) {
-    // Show default message
-    document.getElementById('searchResults').style.display = 'block';
-    document.getElementById('searchResults').innerHTML = `
-      <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
-        <i class="fas fa-search" style="font-size: 4rem; margin-bottom: 16px; opacity: 0.3;"></i>
-        <h3 style="margin-bottom: 8px;">Search GigHub</h3>
-        <p>Find posts, creators, and more</p>
-      </div>
-    `;
-    document.getElementById('postsSearchResults').style.display = 'none';
-    document.getElementById('creatorsSearchResults').style.display = 'none';
-    return;
-  }
-  
-  if (currentSearchType === 'posts') {
-    await searchPosts(query);
-  } else {
-    await searchCreators(query);
-  }
+// Handle search input — debounced, reads from input directly
+let _searchDebounceTimer = null;
+function handleSearch(event) {
+  clearTimeout(_searchDebounceTimer);
+  _searchDebounceTimer = setTimeout(async () => {
+    const input = document.getElementById('searchInput');
+    const query = input ? input.value.trim() : '';
+
+    if (query.length < 2) {
+      const sr = document.getElementById('searchResults');
+      if (sr) {
+        sr.style.display = 'block';
+        sr.innerHTML = `
+          <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+            <i class="fas fa-search" style="font-size:4rem;margin-bottom:16px;opacity:.3;"></i>
+            <h3 style="margin-bottom:8px;">Search GigHub</h3>
+            <p>Find posts, creators, and more</p>
+          </div>`;
+      }
+      const pr = document.getElementById('postsSearchResults');
+      const cr = document.getElementById('creatorsSearchResults');
+      if (pr) pr.style.display = 'none';
+      if (cr) cr.style.display = 'none';
+      return;
+    }
+
+    if (currentSearchType === 'posts') {
+      await searchPosts(query);
+    } else {
+      await searchCreators(query);
+    }
+  }, 350);
 }
 
 // Search posts
 async function searchPosts(query) {
+  const sr = document.getElementById('searchResults');
+  const pr = document.getElementById('postsSearchResults');
+  const cr = document.getElementById('creatorsSearchResults');
+  if (sr) { sr.style.display = 'block'; sr.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><p style="margin-top:12px;">Searching...</p></div>'; }
+  if (pr) pr.style.display = 'none';
+  if (cr) cr.style.display = 'none';
   try {
     const response = await fetch(`${API_URL}/api/search/posts?query=${encodeURIComponent(query)}`);
     const data = await response.json();
 
     if (response.ok && data.posts && data.posts.length > 0) {
-      document.getElementById('searchResults').style.display = 'none';
-      document.getElementById('creatorsSearchResults').style.display = 'none';
-      document.getElementById('postsSearchResults').style.display = 'grid';
+      if (sr) sr.style.display = 'none';
+      if (cr) cr.style.display = 'none';
+      if (pr) pr.style.display = 'grid';
       displayPostsSearchResults(data.posts);
     } else {
-      document.getElementById('searchResults').style.display = 'block';
-      document.getElementById('searchResults').innerHTML = `
-        <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
-          <i class="fas fa-image" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
-          <h3 style="margin-bottom: 8px;">No Posts Found</h3>
-          <p>Try a different search term</p>
-        </div>
-      `;
-      document.getElementById('postsSearchResults').style.display = 'none';
-      document.getElementById('creatorsSearchResults').style.display = 'none';
+      if (sr) { sr.style.display = 'block'; sr.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><i class="fas fa-image" style="font-size:3rem;margin-bottom:16px;opacity:.3;"></i><h3 style="margin-bottom:8px;">No Posts Found</h3><p>Try a different search term</p></div>`; }
+      if (pr) pr.style.display = 'none';
+      if (cr) cr.style.display = 'none';
     }
   } catch (err) {
     console.error('Error searching posts:', err);
-    showAlert('Error searching posts');
+    if (sr) { sr.style.display = 'block'; sr.innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e;">Search failed. Please try again.</div>'; }
   }
 }
 
 // Display posts search results
 function displayPostsSearchResults(posts) {
   const container = document.getElementById('postsSearchResults');
-  
-  container.innerHTML = posts.map(post => `
-    <div class="explore-item" onclick="showSection('feed')">
-      ${post.images && post.images.length > 0 ? `
-        <img src="${API_URL}${post.images[0]}" alt="${escapeHtml(post.title)}">
-      ` : `
-        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-          <i class="fas fa-briefcase"></i>
-        </div>
-      `}
+  container.innerHTML = posts.map(post => {
+    const postId = post._id || post.id;
+    return `
+    <div class="explore-item" onclick="openSearchPost('${postId}')" style="cursor:pointer;">
+      ${post.images && post.images.length > 0
+        ? `<img src="${API_URL}${post.images[0]}" alt="${escapeHtml(post.title||'')}" loading="lazy">`
+        : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;"><i class="fas fa-briefcase"></i></div>`}
       <div class="explore-overlay">
-        <span><i class="fas fa-heart"></i> ${post.likes?.length || 0}</span>
-        <span><i class="fas fa-comment"></i> ${post.comments?.length || 0}</span>
+        <span><i class="fas fa-heart"></i> ${post.likes?.length||0}</span>
+        <span><i class="fas fa-comment"></i> ${post.comments?.length||0}</span>
       </div>
-    </div>
-  `).join('');
+      <div style="position:absolute;bottom:0;left:0;right:0;padding:6px 8px;background:rgba(0,0,0,.6);color:#fff;font-size:.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(post.title||post.caption||'')}</div>
+    </div>`;
+  }).join('');
+}
+
+function openSearchPost(postId) {
+  // Go to feed and scroll to the post
+  showSection('feed');
+  setTimeout(() => {
+    const el = document.querySelector(`[data-post-id="${postId}"]`) ||
+               document.getElementById(`post-${postId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 500);
 }
 
 // Search creators
 async function searchCreators(query) {
+  const sr = document.getElementById('searchResults');
+  const pr = document.getElementById('postsSearchResults');
+  const cr = document.getElementById('creatorsSearchResults');
+  if (sr) { sr.style.display = 'block'; sr.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i><p style="margin-top:12px;">Searching...</p></div>'; }
+  if (pr) pr.style.display = 'none';
+  if (cr) cr.style.display = 'none';
   try {
     const response = await fetch(`${API_URL}/api/search/creators?query=${encodeURIComponent(query)}`);
     const data = await response.json();
 
     if (response.ok && data.creators && data.creators.length > 0) {
-      document.getElementById('searchResults').style.display = 'none';
-      document.getElementById('postsSearchResults').style.display = 'none';
-      document.getElementById('creatorsSearchResults').style.display = 'block';
+      if (sr) sr.style.display = 'none';
+      if (pr) pr.style.display = 'none';
+      if (cr) cr.style.display = 'block';
       displayCreatorsSearchResults(data.creators);
     } else {
-      document.getElementById('searchResults').style.display = 'block';
-      document.getElementById('searchResults').innerHTML = `
-        <div style="text-align: center; padding: 60px 20px; color: var(--text-secondary);">
-          <i class="fas fa-users" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.3;"></i>
-          <h3 style="margin-bottom: 8px;">No Creators Found</h3>
-          <p>Try a different search term</p>
-        </div>
-      `;
-      document.getElementById('postsSearchResults').style.display = 'none';
-      document.getElementById('creatorsSearchResults').style.display = 'none';
+      if (sr) { sr.style.display = 'block'; sr.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-secondary);"><i class="fas fa-users" style="font-size:3rem;margin-bottom:16px;opacity:.3;"></i><h3 style="margin-bottom:8px;">No Creators Found</h3><p>Try a different search term</p></div>`; }
+      if (pr) pr.style.display = 'none';
+      if (cr) cr.style.display = 'none';
     }
   } catch (err) {
     console.error('Error searching creators:', err);
-    showAlert('Error searching creators');
+    if (sr) { sr.style.display = 'block'; sr.innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e;">Search failed. Please try again.</div>'; }
   }
 }
 
@@ -1154,25 +1334,18 @@ function selectPostType(type) {
     mediaHint.innerHTML = '<i class="fas fa-image"></i> Images for your post';
     postMedia.accept = 'image/*';
     createPostBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Share Post';
-  } else if (type === 'reel') {
-    traditionalFields.style.display = 'none';
-    captionField.style.display = 'block';
-    mediaLabel.textContent = 'Upload Video (required)';
-    mediaHint.innerHTML = '<i class="fas fa-film"></i> Vertical video (9:16 aspect ratio recommended)';
-    postMedia.accept = 'video/*';
-    createPostBtn.innerHTML = '<i class="fas fa-film"></i> Share Reel';
   } else if (type === 'short') {
     traditionalFields.style.display = 'none';
     captionField.style.display = 'block';
-    mediaLabel.textContent = 'Upload Video (required)';
-    mediaHint.innerHTML = '<i class="fas fa-video"></i> Short video (up to 60 seconds)';
+    mediaLabel.textContent = 'Upload Short Video (required)';
+    mediaHint.innerHTML = '<i class="fas fa-video"></i> Short — 9:16 portrait, max 60 seconds · Will appear in Shorts row ⚡';
     postMedia.accept = 'video/*';
-    createPostBtn.innerHTML = '<i class="fas fa-video"></i> Share Short';
+    createPostBtn.innerHTML = '<i class="fas fa-bolt"></i> Upload Short ⚡';
   } else if (type === 'video') {
     traditionalFields.style.display = 'none';
     captionField.style.display = 'block';
     mediaLabel.textContent = 'Upload Video (required)';
-    mediaHint.innerHTML = '<i class="fas fa-play-circle"></i> Video content (any length)';
+    mediaHint.innerHTML = '<i class="fas fa-play-circle"></i> Video content (any size, any length)';
     postMedia.accept = 'video/*';
     createPostBtn.innerHTML = '<i class="fas fa-play-circle"></i> Share Video';
   }
@@ -1186,6 +1359,8 @@ document.getElementById('createPostForm')?.addEventListener('submit', async (e) 
   formData.append('postType', currentPostType);
   
   const media = document.getElementById('postMedia').files;
+  const submitBtn = document.getElementById('createPostBtn');
+  const originalBtnText = submitBtn.innerHTML;
 
   try {
     if (currentPostType === 'post') {
@@ -1207,13 +1382,54 @@ document.getElementById('createPostForm')?.addEventListener('submit', async (e) 
       formData.append('budget', budget);
       if (whatsapp) formData.append('whatsapp', whatsapp);
     } else {
-      // Reel/Short/Video only needs caption
+      // Short/Video only needs caption
       const caption = document.getElementById('postCaption').value.trim();
       formData.append('caption', caption);
       
       if (media.length === 0) {
         showAlert('Please upload a video file');
         return;
+      }
+
+      // Shorts go to /api/status-shorts/upload, NOT /api/posts
+      if (currentPostType === 'short') {
+        if (media[0].type.startsWith('video/')) {
+          try {
+            await validateShortsVideo(media[0]);
+          } catch (validationError) {
+            showAlert(validationError);
+            return;
+          }
+        }
+        // Upload as short
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading Short...';
+        try {
+          const shortForm = new FormData();
+          shortForm.append('media', media[0]);
+          shortForm.append('type', 'shorts');
+          if (caption) shortForm.append('caption', caption);
+          const r = await fetch(`${API_URL}/api/status-shorts/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: shortForm
+          });
+          const d = await r.json();
+          if (r.ok) {
+            showAlert('Short uploaded successfully! ⚡', 'success');
+            document.getElementById('createPostForm').reset();
+            selectPostType('post');
+            setTimeout(() => showSection('feed'), 800);
+          } else {
+            showAlert(d.error || 'Upload failed');
+          }
+        } catch (err) {
+          showAlert('Network error: ' + err.message);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+        return; // stop here — don't fall through to /api/posts
       }
     }
 
@@ -1225,34 +1441,84 @@ document.getElementById('createPostForm')?.addEventListener('submit', async (e) 
     console.log('Submitting post...', currentPostType);
     console.log('Media files:', media.length);
 
-    const response = await fetch(`${API_URL}/api/posts`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-        // NOTE: Don't set Content-Type - browser sets it automatically for FormData
-      },
-      body: formData
+    // Show upload progress
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading... 0%';
+    
+    // Create progress bar if it doesn't exist
+    let progressBar = document.getElementById('uploadProgressBar');
+    if (!progressBar) {
+      const progressContainer = document.createElement('div');
+      progressContainer.id = 'uploadProgressContainer';
+      progressContainer.style.cssText = 'margin-top: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; height: 8px;';
+      
+      progressBar = document.createElement('div');
+      progressBar.id = 'uploadProgressBar';
+      progressBar.style.cssText = 'height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); width: 0%; transition: width 0.3s ease; border-radius: 10px;';
+      
+      progressContainer.appendChild(progressBar);
+      document.getElementById('createPostForm').appendChild(progressContainer);
+    }
+
+    const response = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      
+      // Upload progress
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Uploading... ${percentComplete}%`;
+          progressBar.style.width = percentComplete + '%';
+        }
+      });
+      
+      // Upload complete
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve({ ok: true, status: xhr.status, data: JSON.parse(xhr.responseText) });
+        } else {
+          resolve({ ok: false, status: xhr.status, data: JSON.parse(xhr.responseText || '{"error":"Upload failed"}') });
+        }
+      });
+      
+      // Upload error
+      xhr.addEventListener('error', () => {
+        reject(new Error('Network error during upload'));
+      });
+      
+      xhr.open('POST', `${API_URL}/api/posts`);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      xhr.send(formData);
     });
 
     console.log('Response status:', response.status);
-    const data = await response.json();
-    console.log('Response data:', data);
+    console.log('Response data:', response.data);
 
     if (response.ok) {
       const typeLabel = currentPostType.charAt(0).toUpperCase() + currentPostType.slice(1);
       showAlert(`${typeLabel} created successfully! 🎉`, 'success');
       document.getElementById('createPostForm').reset();
+      
+      // Hide progress bar
+      const progressContainer = document.getElementById('uploadProgressContainer');
+      if (progressContainer) {
+        progressContainer.remove();
+      }
+      
       selectPostType('post'); // Reset to post type
       setTimeout(() => {
         showSection('feed');
       }, 1000);
     } else {
-      console.error('Post creation failed:', data);
-      showAlert(data.error || 'Failed to create post');
+      console.error('Post creation failed:', response.data);
+      showAlert(response.data.error || 'Failed to create post');
     }
   } catch (err) {
     console.error('Network error details:', err);
     showAlert('Network error: ' + err.message + '. Please check console for details.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
   }
 });
 
@@ -1262,21 +1528,99 @@ document.getElementById('createPostForm')?.addEventListener('submit', async (e) 
 
 async function loadProfile() {
   try {
-    const response = await fetch(`${API_URL}/api/posts/my`, {
-      headers: getAuthHeaders()
-    });
+    // Fetch full user details from server
+    const [profileRes, postsRes] = await Promise.all([
+      fetch(`${API_URL}/api/users/my-profile`, { headers: getAuthHeaders() }),
+      fetch(`${API_URL}/api/posts/my`, { headers: getAuthHeaders() })
+    ]);
 
-    const data = await response.json();
+    if (profileRes.ok) {
+      const { user } = await profileRes.json();
+      // Update avatar and username in header
+      const av = document.getElementById('profileAvatar');
+      const un = document.getElementById('profileUsername');
+      if (av) av.textContent = (user.name || 'U').charAt(0).toUpperCase();
+      if (un) un.textContent = (user.name || '').toLowerCase().replace(/\s/g, '');
 
-    if (response.ok) {
+      // Update followers/following stats
+      document.getElementById('profileFollowers').textContent = user.followers?.length || 0;
+      document.getElementById('profileFollowing').textContent = user.following?.length || 0;
+
+      // Fill details card
+      document.getElementById('pdName').textContent = user.name || '—';
+      document.getElementById('pdPhone').textContent = user.phone || '—';
+      document.getElementById('pdEmail').textContent = user.email || '—';
+      document.getElementById('pdRole').textContent = (user.role || 'user').charAt(0).toUpperCase() + (user.role || 'user').slice(1);
+      document.getElementById('pdJoined').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', { year:'numeric', month:'long', day:'numeric' }) : '—';
+
+      // Store for edit modal pre-fill
+      window._profileUser = user;
+    }
+
+    if (postsRes.ok) {
+      const data = await postsRes.json();
       document.getElementById('profilePosts').textContent = data.posts?.length || 0;
-      displayFeed(data.posts, 'profilePostsContainer');
+      displayFeed(data.posts || [], 'profilePostsContainer');
     }
   } catch (err) {
     console.error('Error loading profile:', err);
   }
 }
 
+function openEditAccountModal() {
+  const u = window._profileUser || JSON.parse(localStorage.getItem('user') || '{}');
+  document.getElementById('editName').value = u.name || '';
+  document.getElementById('editEmail').value = u.email || '';
+  document.getElementById('editPhone').value = '';
+  document.getElementById('editCurrentPassword').value = '';
+  document.getElementById('editNewPassword').value = '';
+  document.getElementById('editAccountModal').style.display = 'flex';
+}
+
+function closeEditAccountModal() {
+  document.getElementById('editAccountModal').style.display = 'none';
+}
+
+async function saveAccountChanges() {
+  const name = document.getElementById('editName').value.trim();
+  const email = document.getElementById('editEmail').value.trim();
+  const phone = document.getElementById('editPhone').value.trim();
+  const currentPassword = document.getElementById('editCurrentPassword').value;
+  const newPassword = document.getElementById('editNewPassword').value;
+
+  if (!name) { showAlert('Name cannot be empty'); return; }
+
+  const body = { name, email };
+  if (phone || newPassword) {
+    if (!currentPassword) { showAlert('Enter your current password to change phone or password'); return; }
+    body.currentPassword = currentPassword;
+    if (phone) body.phone = phone;
+    if (newPassword) body.newPassword = newPassword;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/users/account`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showAlert('Account updated successfully!', 'success');
+      closeEditAccountModal();
+      // Update localStorage user
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      const updated = { ...stored, name: data.user.name, email: data.user.email, phone: data.user.phone || stored.phone };
+      localStorage.setItem('user', JSON.stringify(updated));
+      currentUser = updated;
+      loadProfile();
+    } else {
+      showAlert(data.error || 'Update failed');
+    }
+  } catch (err) {
+    showAlert('Network error. Please try again.');
+  }
+}
 async function loadDashboard() {
   try {
     const response = await fetch(`${API_URL}/api/dashboard`, {
@@ -1330,17 +1674,12 @@ async function likePost(postId, button) {
 
 // Toggle Comments Section
 function toggleComments(postId) {
-  let commentsSection = document.getElementById(`comments-${postId}`);
+  // Try both ID formats (post-comments-X and comments-X)
+  let commentsSection = document.getElementById(`post-comments-${postId}`) || document.getElementById(`comments-${postId}`);
   
   if (commentsSection) {
-    // Toggle visibility
-    if (commentsSection.style.display === 'none') {
-      commentsSection.style.display = 'block';
-    } else {
-      commentsSection.style.display = 'none';
-    }
+    commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
   } else {
-    // Create comments section if it doesn't exist
     createCommentsSection(postId);
   }
 }
@@ -1425,7 +1764,9 @@ async function loadComments(postId) {
 
 // Add Comment
 async function addComment(postId) {
-  const input = document.getElementById(`comment-input-${postId}`);
+  // Try both ID formats
+  const input = document.getElementById(`post-comment-input-${postId}`) || document.getElementById(`comment-input-${postId}`);
+  if (!input) return;
   const text = input.value.trim();
 
   if (!text) {
@@ -1445,19 +1786,61 @@ async function addComment(postId) {
     if (response.ok) {
       input.value = '';
       showAlert('Comment added! 💬', 'success');
-      
-      // Reload comments to show the new one
       loadComments(postId);
-      
-      // Refresh feed to update comment count
-      setTimeout(() => {
-        loadFeed();
-      }, 1000);
+      // Update comment list inline without full feed reload
+      const commentsList = document.getElementById(`post-comments-list-${postId}`);
+      if (commentsList && data.comments) {
+        commentsList.innerHTML = data.comments.map(c =>
+          `<div class="comment-item"><strong>${escapeHtml(c.userName)}</strong><small style="float:right;">${formatDate(c.timestamp)}</small><p>${escapeHtml(c.text)}</p></div>`
+        ).join('');
+      }
     } else {
       showAlert(data.error || 'Failed to add comment');
     }
   } catch (err) {
     console.error('Error adding comment:', err);
+    showAlert('Network error. Please try again.');
+  }
+}
+
+// ==========================================
+// DELETE POST / REEL
+// ==========================================
+
+async function deletePost(postId, btn) {
+  if (!confirm('Delete this post? This cannot be undone.')) return;
+  try {
+    const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const data = await response.json();
+    if (response.ok) {
+      showAlert('Post deleted', 'success');
+      btn.closest('.post-card').remove();
+    } else {
+      showAlert(data.error || 'Failed to delete post');
+    }
+  } catch (err) {
+    showAlert('Network error. Please try again.');
+  }
+}
+
+async function deleteReel(postId, btn) {
+  if (!confirm('Delete this reel/short? This cannot be undone.')) return;
+  try {
+    const response = await fetch(`${API_URL}/api/status-shorts/${postId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    const data = await response.json();
+    if (response.ok) {
+      showAlert('Deleted successfully', 'success');
+      btn.closest('.post-card').remove();
+    } else {
+      showAlert(data.error || 'Failed to delete');
+    }
+  } catch (err) {
     showAlert('Network error. Please try again.');
   }
 }
@@ -1483,6 +1866,17 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Double-tap heart animation
+function showDoubleTapHeart(container) {
+  const heart = container.querySelector('.dbl-heart');
+  if (!heart) return;
+  heart.style.display = 'block';
+  heart.style.animation = 'none';
+  void heart.offsetWidth; // reflow
+  heart.style.animation = 'heartPop .7s ease forwards';
+  setTimeout(() => { heart.style.display = 'none'; }, 700);
 }
 
 function formatCategory(category) {
@@ -1522,6 +1916,34 @@ function formatDate(dateString) {
 // STATUS & SHORTS (REELS) FUNCTIONALITY
 // ==========================================
 
+// Validate shorts video: must be 9:16 aspect ratio and under 60 seconds
+function validateShortsVideo(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    const url = URL.createObjectURL(file);
+    video.src = url;
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(url);
+      const duration = video.duration;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      if (duration > 60) {
+        return reject(`Shorts must be 60 seconds or less. Your video is ${Math.round(duration)}s long.`);
+      }
+      // Enforce 9:16 portrait — width/height ratio must be ≤ 0.6 (with small tolerance)
+      if (width > 0 && height > 0) {
+        const ratio = width / height;
+        if (ratio > 0.65) {
+          return reject('Shorts must be in 9:16 portrait format (vertical video only). Please rotate or crop your video.');
+        }
+      }
+      resolve();
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); resolve(); }; // skip check if metadata fails
+  });
+}
+
 // Upload Status or Shorts
 document.getElementById('statusShortsForm')?.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1540,6 +1962,16 @@ document.getElementById('statusShortsForm')?.addEventListener('submit', async (e
   if (!type) {
     showAlert('Please select Status or Shorts');
     return;
+  }
+
+  // Validate shorts video constraints
+  if (type === 'shorts' && media.type.startsWith('video/')) {
+    try {
+      await validateShortsVideo(media);
+    } catch (validationError) {
+      showAlert(validationError);
+      return;
+    }
   }
 
   try {
@@ -1563,10 +1995,10 @@ document.getElementById('statusShortsForm')?.addEventListener('submit', async (e
     console.log('Upload response:', data);
 
     if (response.ok) {
-      showAlert('Upload successful! 🎉', 'success');
+      showAlert('Upload successful!', 'success');
       document.getElementById('statusShortsForm').reset();
       setTimeout(() => {
-        showSection('reels');
+        showSection('feed');
       }, 1000);
     } else {
       showAlert(data.error || 'Upload failed');
@@ -1620,11 +2052,17 @@ function displayReels(posts) {
     const user = JSON.parse(localStorage.getItem('user'));
     const isLiked = post.likes && post.likes.includes(user.id);
     
+    // Delete button for reel owner
+    const reelOwnerId = post.userId?._id || post.userId;
+    const reelDeleteBtn = reelOwnerId && reelOwnerId.toString() === user.id.toString()
+      ? `<button onclick="deleteReel('${post._id || post.id}', this)" style="margin-left: auto; background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px 8px; font-size: 0.85rem;" title="Delete"><i class="fas fa-trash-alt"></i></button>`
+      : '';
+
     return `
     <div class="post-card" style="margin-bottom: 20px;">
       <div class="post-header">
         <div class="post-avatar">${(post.userName || 'A').charAt(0).toUpperCase()}</div>
-        <div class="post-user-info">
+        <div class="post-user-info" style="flex:1;">
           <div class="post-username">
             ${escapeHtml(post.userName || 'Anonymous')}
             <span class="type-badge ${post.type === 'status' ? 'badge-status' : 'badge-shorts'}">
@@ -1633,11 +2071,12 @@ function displayReels(posts) {
           </div>
           <div class="post-category">${post.mediaType === 'video' ? '📹 Video' : '🖼️ Image'}</div>
         </div>
+        ${reelDeleteBtn}
       </div>
 
       ${post.mediaType === 'video' ? `
         <div class="video-container">
-          <video src="${API_URL}${post.mediaUrl}" controls playsinline></video>
+          <video src="${API_URL}${post.mediaUrl}" controls playsinline preload="metadata" style="width:100%;max-height:560px;object-fit:contain;background:#000;display:block;"></video>
           <div class="video-actions">
             <button class="video-action-btn ${isLiked ? 'liked' : ''}" onclick="likeReel('${post._id || post.id}', this)">
               <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
@@ -1799,9 +2238,13 @@ async function addReelComment(postId) {
     if (response.ok) {
       input.value = '';
       showAlert('Comment added! 💬', 'success');
-      
-      // Refresh the reels feed to show new comment
-      loadReelsFeed();
+      // Update comment list inline
+      const commentsList = document.getElementById(`reel-comments-list-${postId}`);
+      if (commentsList && data.comments) {
+        commentsList.innerHTML = data.comments.map(c =>
+          `<div class="comment-item"><strong>${escapeHtml(c.userName)}</strong><small style="float:right;">${formatDate(c.timestamp)}</small><p>${escapeHtml(c.text)}</p></div>`
+        ).join('');
+      }
     } else {
       showAlert(data.error || 'Failed to add comment');
     }
@@ -1824,6 +2267,10 @@ function trackReelView(postId) {
 
 // Follow/Unfollow a user
 async function followUser(userId, button) {
+  if (button.disabled) return;
+  const prevHTML = button.innerHTML;
+  button.disabled = true;
+  button.style.opacity = '0.7';
   try {
     const response = await fetch(`${API_URL}/api/follow/${userId}/follow`, {
       method: 'POST',
@@ -1837,32 +2284,33 @@ async function followUser(userId, button) {
         button.innerHTML = '<i class="fas fa-check"></i> Following';
         button.classList.add('following');
         showAlert('User followed! ✓', 'success');
-        
-        // Update notification badge (new follow notification created)
         setTimeout(() => updateNotificationBadge(), 1000);
       } else {
         button.innerHTML = '<i class="fas fa-user-plus"></i> Follow';
         button.classList.remove('following');
-        showAlert('User unfollowed', 'success');
+        showAlert('Unfollowed', 'success');
       }
-      
-      // Update counts if displayed
       const followersElement = document.getElementById('profileFollowers');
       if (followersElement && data.followers !== undefined) {
         followersElement.textContent = data.followers;
       }
     } else {
+      button.innerHTML = prevHTML;
       showAlert(data.error || 'Failed to follow user');
     }
   } catch (err) {
+    button.innerHTML = prevHTML;
     showAlert('Network error. Please try again.');
+  } finally {
+    button.disabled = false;
+    button.style.opacity = '';
   }
 }
 
 // Check if following a user
 async function checkFollowStatus(userId, button) {
   try {
-    const response = await fetch(`${API_URL}/api/users/${userId}/follow-status`, {
+    const response = await fetch(`${API_URL}/api/follow/${userId}/follow-status`, {
       headers: getAuthHeaders()
     });
 
@@ -1870,10 +2318,10 @@ async function checkFollowStatus(userId, button) {
 
     if (response.ok) {
       if (data.following) {
-        button.textContent = 'Unfollow';
+        button.innerHTML = '<i class="fas fa-check"></i> Following';
         button.classList.add('following');
       } else {
-        button.textContent = 'Follow';
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Follow';
         button.classList.remove('following');
       }
     }
@@ -1885,7 +2333,7 @@ async function checkFollowStatus(userId, button) {
 // Load followers
 async function loadFollowers(userId) {
   try {
-    const response = await fetch(`${API_URL}/api/users/${userId}/followers`, {
+    const response = await fetch(`${API_URL}/api/follow/${userId}/followers`, {
       headers: getAuthHeaders()
     });
 
@@ -1903,7 +2351,7 @@ async function loadFollowers(userId) {
 // Load following
 async function loadFollowing(userId) {
   try {
-    const response = await fetch(`${API_URL}/api/users/${userId}/following`, {
+    const response = await fetch(`${API_URL}/api/follow/${userId}/following`, {
       headers: getAuthHeaders()
     });
 
@@ -1924,7 +2372,6 @@ async function loadFollowing(userId) {
 
 // Show Notifications Panel
 function showNotifications() {
-  // Create notifications modal if it doesn't exist
   let modal = document.getElementById('notificationsModal');
   
   if (!modal) {
@@ -1932,24 +2379,26 @@ function showNotifications() {
     modal.id = 'notificationsModal';
     modal.className = 'modal';
     modal.innerHTML = `
-      <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2 style="margin: 0;">🔔 Notifications</h2>
-          <button onclick="closeNotifications()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+      <div class="modal-content" style="max-width:500px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;padding:0;border-radius:16px;">
+        <div style="padding:16px 20px;background:var(--ig-gradient);color:#fff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <span style="font-weight:800;font-size:1.1rem;">🔔 Notifications</span>
+          <button onclick="closeNotifications()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;">&times;</button>
         </div>
-        <button onclick="markAllNotificationsAsRead()" style="margin-bottom: 16px; padding: 8px 16px; background: var(--ig-gradient); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
-          Mark All as Read
-        </button>
-        <div id="notificationsList"></div>
+        <div style="padding:10px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:8px;flex-shrink:0;">
+          <button onclick="markAllNotificationsAsRead()" style="flex:1;padding:8px;background:var(--bg-primary);border:1.5px solid var(--border-color);border-radius:8px;cursor:pointer;font-weight:600;font-size:.85rem;color:var(--text-primary);">
+            <i class="fas fa-check-double"></i> Mark All Read
+          </button>
+          <button onclick="clearAllNotifications()" style="flex:1;padding:8px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;cursor:pointer;font-weight:600;font-size:.85rem;color:#dc2626;">
+            <i class="fas fa-trash-alt"></i> Clear All
+          </button>
+        </div>
+        <div id="notificationsList" style="overflow-y:auto;flex:1;"></div>
       </div>
     `;
     document.body.appendChild(modal);
   }
   
-  // Show modal
   modal.style.display = 'flex';
-  
-  // Load notifications
   loadAndDisplayNotifications();
 }
 
@@ -1969,19 +2418,26 @@ async function loadAndDisplayNotifications() {
   if (!list) return;
   
   if (data.notifications && data.notifications.length > 0) {
-    list.innerHTML = data.notifications.map(notification => `
-      <div style="padding: 12px; border-bottom: 1px solid var(--border-color); ${notification.isRead ? '' : 'background: rgba(64, 93, 230, 0.05);'}">
-        <div style="display: flex; justify-content: space-between; align-items: start;">
-          <div style="flex: 1;">
-            <p style="margin: 0 0 4px 0; font-size: 0.9rem;">${notification.message}</p>
-            <small style="color: var(--text-secondary);">${formatDate(notification.createdAt)}</small>
-          </div>
-          ${!notification.isRead ? '<span style="width: 8px; height: 8px; background: var(--ig-primary); border-radius: 50%; display: inline-block;"></span>' : ''}
+    list.innerHTML = data.notifications.map(n => {
+      const iconMap = { like: '❤️', comment: '💬', follow: '👤', bookmark: '🔖' };
+      const icon = iconMap[n.type] || '🔔';
+      return `
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border-color);display:flex;gap:12px;align-items:start;${n.isRead ? '' : 'background:rgba(64,93,230,.04);'}cursor:pointer;" onclick="markNotificationAsRead('${n._id||n.id}');this.style.background='transparent';">
+        <div style="font-size:1.4rem;flex-shrink:0;margin-top:2px;">${icon}</div>
+        <div style="flex:1;">
+          <p style="margin:0 0 3px;font-size:.9rem;line-height:1.4;">${n.message}</p>
+          <small style="color:var(--text-secondary);">${formatDate(n.createdAt)}</small>
         </div>
-      </div>
-    `).join('');
+        ${!n.isRead ? '<div style="width:8px;height:8px;background:var(--ig-primary);border-radius:50%;flex-shrink:0;margin-top:6px;"></div>' : ''}
+      </div>`;
+    }).join('');
   } else {
-    list.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px 0;">No notifications yet</p>';
+    list.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text-secondary);">
+        <div style="font-size:3rem;margin-bottom:12px;">🔔</div>
+        <p style="font-weight:600;">No notifications yet</p>
+        <p style="font-size:.85rem;margin-top:6px;">When someone likes or comments on your posts, you'll see it here.</p>
+      </div>`;
   }
 }
 
@@ -2156,9 +2612,32 @@ async function markAllNotificationsAsRead() {
     if (response.ok) {
       showAlert('All notifications marked as read', 'success');
       updateNotificationBadge();
+      loadAndDisplayNotifications();
     }
   } catch (err) {
     console.error('Error marking all notifications as read:', err);
+  }
+}
+
+// Clear All Notifications
+async function clearAllNotifications() {
+  if (!confirm('Clear all notifications? This cannot be undone.')) return;
+  try {
+    const response = await fetch(`${API_URL}/api/notifications/clear-all`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (response.ok) {
+      showAlert('All notifications cleared', 'success');
+      updateNotificationBadge();
+      const list = document.getElementById('notificationsList');
+      if (list) list.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:40px 0;">No notifications</p>';
+    } else {
+      // Fallback: mark all read if delete endpoint not available
+      await markAllNotificationsAsRead();
+    }
+  } catch (err) {
+    console.error('Error clearing notifications:', err);
   }
 }
 
@@ -2268,5 +2747,188 @@ document.addEventListener('DOMContentLoaded', () => {
   loadDarkModePreference();
   updateNotificationBadge();
 });
+
+// ==========================================
+// OWNER / ADMIN PANEL
+// ==========================================
+
+let adminCurrentTab = 'users';
+let adminCurrentPage = 1;
+let adminSearchQuery = '';
+
+async function loadAdminPanel() {
+  await loadAdminStats();
+  await loadAdminTab(adminCurrentTab, 1, '');
+}
+
+async function loadAdminStats() {
+  try {
+    const res = await fetch(`${API_URL}/api/admin/stats`, { headers: getAuthHeaders() });
+    if (!res.ok) return;
+    const { stats } = await res.json();
+    const bar = document.getElementById('adminStatsBar');
+    if (!bar) return;
+    bar.innerHTML = [
+      { label: 'Users', val: stats.totalUsers, icon: '👥' },
+      { label: 'Posts', val: stats.totalPosts, icon: '📝' },
+      { label: 'Shorts', val: stats.totalShorts, icon: '🎬' },
+      { label: 'Creators', val: stats.totalCreators, icon: '🎨' }
+    ].map(s => `
+      <div style="text-align:center;background:rgba(255,255,255,.1);border-radius:10px;padding:8px 14px;min-width:60px;">
+        <div style="font-size:1.1rem;">${s.icon}</div>
+        <div style="font-size:1.2rem;font-weight:800;">${s.val}</div>
+        <div style="font-size:.7rem;opacity:.7;">${s.label}</div>
+      </div>`).join('');
+  } catch (e) { console.error('Admin stats error:', e); }
+}
+
+function switchAdminTab(tab) {
+  adminCurrentTab = tab;
+  adminCurrentPage = 1;
+  adminSearchQuery = document.getElementById('adminSearchInput')?.value || '';
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  const btn = document.getElementById('adminTab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+  if (btn) btn.classList.add('active');
+  loadAdminTab(tab, 1, adminSearchQuery);
+}
+
+function adminSearch() {
+  adminSearchQuery = document.getElementById('adminSearchInput')?.value || '';
+  clearTimeout(window._adminSearchTimer);
+  window._adminSearchTimer = setTimeout(() => loadAdminTab(adminCurrentTab, 1, adminSearchQuery), 350);
+}
+
+async function loadAdminTab(tab, page, search) {
+  adminCurrentPage = page;
+  const content = document.getElementById('adminContent');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;"></i></div>';
+
+  try {
+    const params = new URLSearchParams({ page, limit: 20, ...(search ? { search } : {}) });
+    const endpoint = tab === 'users' ? 'users' : tab === 'posts' ? 'posts' : 'shorts';
+    const res = await fetch(`${API_URL}/api/admin/${endpoint}?${params}`, { headers: getAuthHeaders() });
+    if (!res.ok) { content.innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e;">Access denied or error loading data.</div>'; return; }
+    const data = await res.json();
+
+    if (tab === 'users') renderAdminUsers(data.users || [], data.total || 0);
+    else if (tab === 'posts') renderAdminPosts(data.posts || [], data.total || 0);
+    else renderAdminShorts(data.shorts || [], data.total || 0);
+  } catch (e) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#e53e3e;">Network error.</div>';
+  }
+}
+
+function renderAdminUsers(users, total) {
+  const content = document.getElementById('adminContent');
+  if (!users.length) { content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">No users found.</div>'; return; }
+  content.innerHTML = users.map(u => `
+    <div class="admin-card">
+      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.1rem;flex-shrink:0;">
+        ${(u.name||'?').charAt(0).toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${escapeHtml(u.name)} ${u.isOwner ? '<span style="background:#fef3c7;color:#d97706;padding:1px 6px;border-radius:6px;font-size:.7rem;font-weight:800;">OWNER</span>' : ''}
+        </div>
+        <div style="font-size:.8rem;color:#6b7280;">${escapeHtml(u.phone||'')} · <span style="text-transform:capitalize;">${u.role}</span></div>
+        <div style="font-size:.75rem;color:#9ca3af;">${u.email ? escapeHtml(u.email) : 'No email'} · Joined ${formatDate(u.createdAt)}</div>
+      </div>
+      ${u.isOwner ? '' : `<button class="admin-del-btn" onclick="adminDeleteUser('${u._id}','${escapeHtml(u.name)}')"><i class="fas fa-trash"></i> Delete</button>`}
+    </div>`).join('');
+  renderAdminPagination(total, 20, adminCurrentPage, 'users');
+}
+
+function renderAdminPosts(posts, total) {
+  const content = document.getElementById('adminContent');
+  if (!posts.length) { content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">No posts found.</div>'; return; }
+  content.innerHTML = posts.map(p => `
+    <div class="admin-card">
+      ${p.images && p.images[0] ? `<img src="${API_URL}${p.images[0]}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` :
+        p.videoUrl ? `<div style="width:48px;height:48px;border-radius:8px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;flex-shrink:0;">🎬</div>` :
+        `<div style="width:48px;height:48px;border-radius:8px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">📝</div>`}
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.title||p.caption||'Untitled')}</div>
+        <div style="font-size:.8rem;color:#6b7280;">By ${escapeHtml(p.userName||'Unknown')} · ${p.postType||'post'}</div>
+        <div style="font-size:.75rem;color:#9ca3af;">${(p.likes||[]).length} likes · ${(p.comments||[]).length} comments · ${formatDate(p.createdAt)}</div>
+      </div>
+      <button class="admin-del-btn" onclick="adminDeletePost('${p._id}','${escapeHtml((p.title||p.caption||'this post').replace(/'/g,''))}')"><i class="fas fa-trash"></i> Delete</button>
+    </div>`).join('');
+  renderAdminPagination(total, 20, adminCurrentPage, 'posts');
+}
+
+function renderAdminShorts(shorts, total) {
+  const content = document.getElementById('adminContent');
+  if (!shorts.length) { content.innerHTML = '<div style="text-align:center;padding:40px;color:#9ca3af;">No shorts/status found.</div>'; return; }
+  content.innerHTML = shorts.map(s => `
+    <div class="admin-card">
+      <div style="width:48px;height:48px;border-radius:8px;background:#1a1a2e;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;flex-shrink:0;">
+        ${s.mediaType === 'video' ? '🎬' : '🖼️'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(s.caption||'No caption')} <span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:6px;font-size:.7rem;">${s.type}</span></div>
+        <div style="font-size:.8rem;color:#6b7280;">By ${escapeHtml(s.userName||'Unknown')} · ${s.mediaType}</div>
+        <div style="font-size:.75rem;color:#9ca3af;">${(s.likes||[]).length} likes · ${s.viewCount||0} views · ${formatDate(s.createdAt)}</div>
+      </div>
+      <button class="admin-del-btn" onclick="adminDeleteShort('${s._id}')"><i class="fas fa-trash"></i> Delete</button>
+    </div>`).join('');
+  renderAdminPagination(total, 20, adminCurrentPage, 'shorts');
+}
+
+function renderAdminPagination(total, limit, currentPage, tab) {
+  const pages = Math.ceil(total / limit);
+  const pg = document.getElementById('adminPagination');
+  if (!pg || pages <= 1) { if (pg) pg.innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= pages; i++) {
+    html += `<button onclick="loadAdminTab('${tab}',${i},'${adminSearchQuery}')" style="padding:6px 12px;border-radius:8px;border:1.5px solid ${i===currentPage?'#e53e3e':'#e5e7eb'};background:${i===currentPage?'#e53e3e':'#fff'};color:${i===currentPage?'#fff':'#374151'};font-weight:700;cursor:pointer;">${i}</button>`;
+  }
+  pg.innerHTML = `<span style="color:#6b7280;font-size:.85rem;align-self:center;">${total} total</span> ${html}`;
+}
+
+async function adminDeleteUser(userId, name) {
+  if (!confirm(`Delete user "${name}" and ALL their content? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`${API_URL}/api/admin/users/${userId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    const data = await res.json();
+    if (res.ok) {
+      showAlert(`User "${name}" deleted successfully.`, 'success');
+      loadAdminTab(adminCurrentTab, adminCurrentPage, adminSearchQuery);
+      loadAdminStats();
+    } else {
+      showAlert(data.error || 'Failed to delete user');
+    }
+  } catch (e) { showAlert('Network error'); }
+}
+
+async function adminDeletePost(postId, title) {
+  if (!confirm(`Delete post "${title}"? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`${API_URL}/api/admin/posts/${postId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    const data = await res.json();
+    if (res.ok) {
+      showAlert('Post deleted.', 'success');
+      loadAdminTab(adminCurrentTab, adminCurrentPage, adminSearchQuery);
+      loadAdminStats();
+    } else {
+      showAlert(data.error || 'Failed to delete post');
+    }
+  } catch (e) { showAlert('Network error'); }
+}
+
+async function adminDeleteShort(shortId) {
+  if (!confirm('Delete this short/status? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`${API_URL}/api/admin/shorts/${shortId}`, { method: 'DELETE', headers: getAuthHeaders() });
+    const data = await res.json();
+    if (res.ok) {
+      showAlert('Short deleted.', 'success');
+      loadAdminTab(adminCurrentTab, adminCurrentPage, adminSearchQuery);
+      loadAdminStats();
+    } else {
+      showAlert(data.error || 'Failed to delete short');
+    }
+  } catch (e) { showAlert('Network error'); }
+}
 
 

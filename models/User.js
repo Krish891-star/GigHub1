@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, sparse: true },
   password: { type: String, required: true },
   name: { type: String, required: true },
-  role: { type: String, enum: ['user', 'creator'], required: true },
+  role: { type: String, enum: ['user', 'creator', 'owner'], default: 'user', required: true },
   
   // Creator specific fields
   skills: [String],
@@ -57,6 +57,7 @@ const userSchema = new mongoose.Schema({
   
   // Profile completion
   profileCompleted: { type: Boolean, default: false },
+  isOwner: { type: Boolean, default: false },
   
   createdAt: { type: Date, default: Date.now }
 });

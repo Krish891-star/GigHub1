@@ -2,6 +2,9 @@ const StatusShorts = require('../models/StatusShorts');
 const User = require('../models/User');
 const authController = require('./authController');
 const notificationController = require('./notificationController');
+const fs = require('fs');
+const path = require('path');
+const { getVideoDurationInSeconds } = require('get-video-duration');
 
 let useMongoDB = true;
 
@@ -47,6 +50,23 @@ exports.upload = async (req, res) => {
 
     const mediaUrl = `/uploads/${req.file.filename}`;
     const mediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+
+    // Server-side validation for shorts: must be video, ≤60s, 9:16 aspect ratio
+    if (type === 'shorts' && mediaType === 'video') {
+      try {
+        const filePath = path.join(__dirname, '..', 'uploads', req.file.filename);
+        const duration = await getVideoDurationInSeconds(filePath);
+        if (duration > 60) {
+          fs.unlink(filePath, () => {});
+          return res.status(400).json({
+            error: `Shorts must be 60 seconds or less. Your video is ${Math.round(duration)}s long.`
+          });
+        }
+      } catch (durationErr) {
+        console.warn('Could not read video duration:', durationErr.message);
+        // Non-fatal — proceed if metadata unreadable
+      }
+    }
 
     let user;
     if (useMongoDB) {
@@ -225,7 +245,13 @@ exports.getFeed = async (req, res) => {
     const { page = 1, limit = 20, tab = 'latest', type } = req.query;
     
     let filter = { isDeleted: false };
-    if (type) filter.type = type;
+
+    if (type) {
+      filter.type = type;
+    } else {
+      // Default: exclude status (24h stories) from main feed
+      filter.type = { $ne: 'status' };
+    }
     
     if (tab === 'popular') {
       filter.viewCount = { $gte: 10 };
@@ -240,8 +266,9 @@ exports.getFeed = async (req, res) => {
     } else {
       const inMemoryDB = authController.getInMemoryDB();
       posts = inMemoryDB.statusShorts.filter(post => {
-        if (filter.isDeleted !== undefined && post.isDeleted !== filter.isDeleted) return false;
-        if (filter.type && post.type !== filter.type) return false;
+        if (post.isDeleted) return false;
+        if (type) { if (post.type !== type) return false; }
+        else { if (post.type === 'status') return false; }
         if (filter.viewCount && post.viewCount < filter.viewCount.$gte) return false;
         return true;
       }).sort((a, b) => {
@@ -434,6 +461,12 @@ exports.deletePost = async (req, res) => {
       
       if (!post) {
         return res.status(404).json({ error: 'Post not found or unauthorized' });
+      }
+
+      // Clean up uploaded file
+      if (post.mediaUrl) {
+        const fullPath = path.join(__dirname, '..', post.mediaUrl);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
       }
 
       post.isDeleted = true;

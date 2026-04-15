@@ -2,456 +2,406 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>GigHub - Login & Signup</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="/icon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/icon-16x16.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png">
-  <meta name="theme-color" content="#667eea">
+  <meta name="theme-color" content="#6C63FF">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 450px;
-    }
-
-    .logo {
-      text-align: center;
-      color: white;
-      margin-bottom: 30px;
-    }
-
-    .logo h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .logo p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-    }
-
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 40px 30px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: #f0f0f0;
-      color: #666;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .tab.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .form-container {
-      display: none;
-    }
-
-    .form-container.active {
-      display: block;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: #333;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 1rem;
-      transition: all 0.3s;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-top: 10px;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn:active {
-      transform: translateY(0);
-    }
-
-    .alert {
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: none;
-      font-size: 0.9rem;
-    }
-
-    .alert.error {
-      background: #fee;
-      color: #c33;
-      border: 1px solid #fcc;
-      display: block;
-    }
-
-    .alert.success {
-      background: #efe;
-      color: #3c3;
-      border: 1px solid #cfc;
-      display: block;
-    }
-
-    .divider {
-      text-align: center;
-      margin: 20px 0;
-      position: relative;
-      color: #999;
-    }
-
-    .divider::before,
-    .divider::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      width: 45%;
-      height: 1px;
-      background: #e0e0e0;
-    }
-
-    .divider::before {
-      left: 0;
-    }
-
-    .divider::after {
-      right: 0;
-    }
-
-    .features {
-      margin-top: 30px;
-      padding-top: 30px;
-      border-top: 1px solid #e0e0e0;
-    }
-
-    .feature {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 15px;
-      color: #666;
-      font-size: 0.9rem;
-    }
-
-    .feature i {
-      color: #667eea;
-      font-size: 1.2rem;
-      width: 24px;
-    }
-
-    @media (max-width: 480px) {
-      .logo h1 {
-        font-size: 2.5rem;
-      }
-
-      .card {
-        padding: 30px 20px;
-      }
-    }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:#6C63FF;--p2:#a78bfa;--p3:#f472b6;
+  --grad:linear-gradient(135deg,#6C63FF 0%,#a78bfa 50%,#f472b6 100%);
+  --grad2:linear-gradient(135deg,#f472b6,#6C63FF);
+  --card:#fffffffa;--text:#1e1b4b;--muted:#6b7280;
+  --border:#e5e7eb;--inp:#f9fafb;--radius:18px;
+  --shadow:0 32px 80px rgba(108,99,255,.22),0 8px 24px rgba(0,0,0,.10);
+}
+html,body{min-height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:var(--grad);background-attachment:fixed;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;position:relative;overflow-x:hidden}
+body::before,body::after{content:'';position:fixed;border-radius:50%;filter:blur(90px);opacity:.3;pointer-events:none;z-index:0}
+body::before{width:520px;height:520px;background:radial-gradient(circle,#f472b6,#6C63FF);top:-160px;right:-160px;animation:b1 9s ease-in-out infinite alternate}
+body::after{width:420px;height:420px;background:radial-gradient(circle,#4facfe,#00f2fe);bottom:-120px;left:-120px;animation:b2 11s ease-in-out infinite alternate}
+@keyframes b1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(40px,30px) scale(1.12)}}
+@keyframes b2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-30px,40px) scale(1.18)}}
+.wrap{width:100%;max-width:460px;position:relative;z-index:1}
+.logo-sec{text-align:center;margin-bottom:24px}
+.logo-icon{width:76px;height:76px;background:rgba(255,255,255,.22);backdrop-filter:blur(12px);border-radius:24px;display:inline-flex;align-items:center;justify-content:center;font-size:2.1rem;color:#fff;margin-bottom:12px;border:1.5px solid rgba(255,255,255,.35);box-shadow:0 8px 32px rgba(0,0,0,.18);animation:pop .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.logo-title{font-size:2.5rem;font-weight:900;color:#fff;letter-spacing:-1px;text-shadow:0 2px 16px rgba(0,0,0,.2)}
+.logo-sub{color:rgba(255,255,255,.82);font-size:.95rem;margin-top:4px;font-weight:500}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 28px;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.6)}
+.tabs{display:flex;background:#f3f4f6;border-radius:12px;padding:4px;margin-bottom:24px;gap:4px}
+.tab{flex:1;padding:10px;border:none;background:transparent;border-radius:9px;font-size:.95rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.active{background:#fff;color:var(--p);box-shadow:0 2px 12px rgba(108,99,255,.18)}
+.tab:hover:not(.active){color:var(--p)}
+.form-container{display:none}.form-container.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.form-group{margin-bottom:16px;position:relative}
+.form-group label{display:block;font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
+.input-wrap{position:relative}
+.input-wrap i.ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--p);font-size:.95rem;pointer-events:none}
+.form-group input,.form-group select{width:100%;padding:13px 14px 13px 40px;border:2px solid var(--border);border-radius:12px;font-size:.97rem;background:var(--inp);color:var(--text);transition:all .25s;outline:none;-webkit-appearance:none;appearance:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--p);background:#fff;box-shadow:0 0 0 4px rgba(108,99,255,.12)}
+.form-group input::placeholder{color:#b0b7c3}
+.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:0}
+.pw-toggle:hover{color:var(--p)}
+.strength-bar{height:4px;border-radius:4px;margin-top:6px;background:#e5e7eb;overflow:hidden}
+.strength-fill{height:100%;border-radius:4px;transition:width .3s,background .3s;width:0}
+.strength-text{font-size:.75rem;color:var(--muted);margin-top:3px}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.role-card{border:2px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .25s;background:var(--inp)}
+.role-card:hover{border-color:var(--p);background:#f5f3ff}
+.role-card.selected{border-color:var(--p);background:#f5f3ff;box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.role-card i{font-size:1.6rem;color:var(--p);margin-bottom:6px;display:block}
+.role-card span{font-size:.82rem;font-weight:700;color:var(--text);display:block}
+.role-card small{font-size:.72rem;color:var(--muted)}
+.btn{width:100%;padding:14px;border:none;background:var(--grad);color:#fff;font-size:1rem;font-weight:700;border-radius:12px;cursor:pointer;transition:all .25s;margin-top:8px;letter-spacing:.3px;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}
+.btn:hover::after{background:rgba(255,255,255,.08)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(108,99,255,.35)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.7;cursor:not-allowed;transform:none}
+.btn-spinner{display:none;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.alert{padding:12px 16px;border-radius:10px;margin-bottom:16px;font-size:.88rem;font-weight:500;display:none;align-items:center;gap:8px}
+.alert.show{display:flex}
+.alert.error{background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca}
+.alert.success{background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0}
+.divider{text-align:center;margin:18px 0;position:relative;color:var(--muted);font-size:.82rem}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.divider::before{left:0}.divider::after{right:0}
+.features{margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.feature{display:flex;align-items:center;gap:10px;margin-bottom:10px;color:var(--muted);font-size:.85rem}
+.feature i{color:var(--p);font-size:1rem;width:20px;flex-shrink:0}
+/* Terms Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;animation:fadeIn .25s ease}
+.terms-modal{background:#fff;border-radius:22px;max-width:500px;width:100%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.25);overflow:hidden;animation:slideUp .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.terms-header{padding:24px 24px 16px;background:var(--grad);color:#fff;text-align:center;flex-shrink:0}
+.terms-header .t-icon{font-size:2.4rem;margin-bottom:8px}
+.terms-header h2{font-size:1.4rem;font-weight:800;margin-bottom:4px}
+.terms-header p{font-size:.85rem;opacity:.88}
+.terms-body{padding:20px 24px;overflow-y:auto;flex:1}
+.terms-section{margin-bottom:18px}
+.terms-section h3{font-size:.9rem;font-weight:800;color:var(--p);margin-bottom:6px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.4px}
+.terms-section p,.terms-section li{font-size:.85rem;color:#4b5563;line-height:1.6}
+.terms-section ul{padding-left:16px}
+.terms-section li{margin-bottom:3px}
+.terms-footer{padding:16px 24px 20px;border-top:1px solid var(--border);flex-shrink:0;background:#fafafa}
+.terms-footer p{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:12px}
+.btn-accept{width:100%;padding:14px;border:none;background:var(--grad);color:#fff;font-size:1rem;font-weight:700;border-radius:12px;cursor:pointer;transition:all .25s;letter-spacing:.3px}
+.btn-accept:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(108,99,255,.35)}
+@media(max-width:480px){
+  .card{padding:24px 18px}
+  .logo-title{font-size:2rem}
+  .logo-icon{width:64px;height:64px;font-size:1.8rem}
+  .role-grid{grid-template-columns:1fr 1fr}
+  .terms-modal{max-height:92vh;border-radius:18px 18px 0 0;align-self:flex-end;margin:0;max-width:100%}
+  .overlay{align-items:flex-end;padding:0}
+}
+@media(max-width:360px){
+  body{padding:10px}
+  .card{padding:20px 14px}
+}
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="logo">
-      <h1><i class="fas fa-rocket"></i> GigHub</h1>
-      <p>Connect. Create. Collaborate.</p>
+
+<!-- Terms & Conditions Modal -->
+<div class="overlay" id="termsOverlay">
+  <div class="terms-modal">
+    <div class="terms-header">
+      <div class="t-icon">🚀</div>
+      <h2>Welcome to GigHub</h2>
+      <p>Connect with creators. Get work done. Grow together.</p>
+    </div>
+    <div class="terms-body">
+      <div class="terms-section">
+        <h3><i class="fas fa-info-circle"></i> What is GigHub?</h3>
+        <p>GigHub is a creative freelance platform where clients post projects and creators showcase their skills. Think of it as your professional creative community.</p>
+      </div>
+      <div class="terms-section">
+        <h3><i class="fas fa-star"></i> Key Features</h3>
+        <ul>
+          <li>Post & discover creative projects</li>
+          <li>Follow creators and build your network</li>
+          <li>Share stories, reels & portfolio work</li>
+          <li>Real-time notifications & bookmarks</li>
+          <li>Creator profiles with ratings & reviews</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <h3><i class="fas fa-shield-alt"></i> Your Privacy</h3>
+        <p>We collect only what's needed: your name, phone, and content you post. We never sell your data. Your info stays safe with us.</p>
+      </div>
+      <div class="terms-section">
+        <h3><i class="fas fa-gavel"></i> Community Rules</h3>
+        <ul>
+          <li>Be respectful — no harassment or hate speech</li>
+          <li>Post only content you own or have rights to</li>
+          <li>No spam, scams, or misleading content</li>
+          <li>Violations may result in account suspension</li>
+        </ul>
+      </div>
+      <div class="terms-section">
+        <h3><i class="fas fa-file-contract"></i> By Joining</h3>
+        <p>You agree to our Terms of Service and Privacy Policy. You must be 13+ to use GigHub. We may update these terms with notice.</p>
+      </div>
+    </div>
+    <div class="terms-footer">
+      <p>By tapping "Accept & Continue" you agree to GigHub's Terms of Service and Privacy Policy.</p>
+      <button class="btn-accept" onclick="acceptTerms()">
+        <i class="fas fa-check-circle"></i> Accept & Continue
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="logo-sec">
+    <div class="logo-icon"><i class="fas fa-rocket"></i></div>
+    <div class="logo-title">GigHub</div>
+    <div class="logo-sub">Connect. Create. Collaborate.</div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')" id="tabLogin">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </button>
+      <button class="tab" onclick="switchTab('signup')" id="tabSignup">
+        <i class="fas fa-user-plus"></i> Sign Up
+      </button>
     </div>
 
-    <div class="card">
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('login')">
-          <i class="fas fa-sign-in-alt"></i> Login
-        </button>
-        <button class="tab" onclick="switchTab('signup')">
-          <i class="fas fa-user-plus"></i> Signup
-        </button>
-      </div>
+    <div id="alertBox" class="alert"></div>
 
-      <div id="alert" class="alert"></div>
-
-      <!-- Login Form -->
-      <div id="loginForm" class="form-container active">
-        <form onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label><i class="fas fa-phone"></i> Phone Number</label>
-            <input type="tel" id="loginPhone" placeholder="Enter your phone number" required>
-          </div>
-
-          <div class="form-group">
-            <label><i class="fas fa-lock"></i> Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password" required>
-          </div>
-
-          <button type="submit" class="btn">
-            <i class="fas fa-sign-in-alt"></i> Login
-          </button>
-        </form>
-
-        <div class="features">
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Access your dashboard and posts</span>
-          </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Connect with creators and clients</span>
-          </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Manage notifications and bookmarks</span>
+    <!-- Login Form -->
+    <div id="loginForm" class="form-container active">
+      <form onsubmit="handleLogin(event)" autocomplete="on">
+        <div class="form-group">
+          <label>Phone Number</label>
+          <div class="input-wrap">
+            <i class="fas fa-phone ico"></i>
+            <input type="tel" id="loginPhone" placeholder="+91 98765 43210" required autocomplete="tel">
           </div>
         </div>
-      </div>
-
-      <!-- Signup Form -->
-      <div id="signupForm" class="form-container">
-        <form onsubmit="handleSignup(event)">
-          <div class="form-group">
-            <label><i class="fas fa-user"></i> Full Name</label>
-            <input type="text" id="signupName" placeholder="Enter your full name" required>
-          </div>
-
-          <div class="form-group">
-            <label><i class="fas fa-phone"></i> Phone Number</label>
-            <input type="tel" id="signupPhone" placeholder="Enter your phone number" required>
-          </div>
-
-          <div class="form-group">
-            <label><i class="fas fa-envelope"></i> Email (Optional)</label>
-            <input type="email" id="signupEmail" placeholder="Enter your email">
-          </div>
-
-          <div class="form-group">
-            <label><i class="fas fa-lock"></i> Password</label>
-            <input type="password" id="signupPassword" placeholder="Create a password" required minlength="6">
-          </div>
-
-          <div class="form-group">
-            <label><i class="fas fa-user-tag"></i> I am a...</label>
-            <select id="signupRole" required>
-              <option value="">Select your role</option>
-              <option value="user">Client - I need work done</option>
-              <option value="creator">Creator - I do creative work</option>
-            </select>
-          </div>
-
-          <button type="submit" class="btn">
-            <i class="fas fa-user-plus"></i> Create Account
-          </button>
-        </form>
-
-        <div class="features">
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Post projects or showcase your work</span>
-          </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Follow creators and get discovered</span>
-          </div>
-          <div class="feature">
-            <i class="fas fa-check-circle"></i>
-            <span>Free to use, no credit card required</span>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock ico"></i>
+            <input type="password" id="loginPassword" placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="pw-toggle" onclick="togglePw('loginPassword',this)"><i class="fas fa-eye"></i></button>
           </div>
         </div>
+        <button type="submit" class="btn" id="loginBtn">
+          <span id="loginBtnText"><i class="fas fa-sign-in-alt"></i> Login</span>
+          <div class="btn-spinner" id="loginSpinner"></div>
+        </button>
+      </form>
+      <div class="features">
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Access your dashboard and posts</span></div>
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Connect with creators and clients</span></div>
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Manage notifications and bookmarks</span></div>
+      </div>
+    </div>
+
+    <!-- Signup Form -->
+    <div id="signupForm" class="form-container">
+      <form onsubmit="handleSignup(event)" autocomplete="on">
+        <div class="form-group">
+          <label>Full Name</label>
+          <div class="input-wrap">
+            <i class="fas fa-user ico"></i>
+            <input type="text" id="signupName" placeholder="Your full name" required autocomplete="name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <div class="input-wrap">
+            <i class="fas fa-phone ico"></i>
+            <input type="tel" id="signupPhone" placeholder="+91 98765 43210" required autocomplete="tel">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email <span style="color:var(--muted);font-weight:400;text-transform:none">(optional)</span></label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope ico"></i>
+            <input type="email" id="signupEmail" placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock ico"></i>
+            <input type="password" id="signupPassword" placeholder="Create a strong password" required autocomplete="new-password" oninput="checkStrength(this.value)">
+            <button type="button" class="pw-toggle" onclick="togglePw('signupPassword',this)"><i class="fas fa-eye"></i></button>
+          </div>
+          <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+          <div class="strength-text" id="strengthText"></div>
+        </div>
+        <div class="form-group">
+          <label>I am a...</label>
+          <div class="role-grid">
+            <div class="role-card" id="roleUser" onclick="selectRole('user')">
+              <i class="fas fa-briefcase"></i>
+              <span>Client</span>
+              <small>I need work done</small>
+            </div>
+            <div class="role-card" id="roleCreator" onclick="selectRole('creator')">
+              <i class="fas fa-paint-brush"></i>
+              <span>Creator</span>
+              <small>I do creative work</small>
+            </div>
+          </div>
+          <input type="hidden" id="signupRole" required>
+        </div>
+        <button type="submit" class="btn" id="signupBtn">
+          <span id="signupBtnText"><i class="fas fa-user-plus"></i> Create Account</span>
+          <div class="btn-spinner" id="signupSpinner"></div>
+        </button>
+      </form>
+      <div class="features">
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Post projects or showcase your work</span></div>
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Follow creators and get discovered</span></div>
+        <div class="feature"><i class="fas fa-check-circle"></i><span>Free to use, no credit card required</span></div>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const API_URL = window.location.origin;
+<script>
+const API_URL = window.location.origin;
+let selectedRole = '';
 
-    function switchTab(tab) {
-      const tabs = document.querySelectorAll('.tab');
-      const loginForm = document.getElementById('loginForm');
-      const signupForm = document.getElementById('signupForm');
-      const alert = document.getElementById('alert');
+// Terms acceptance
+function acceptTerms() {
+  localStorage.setItem('termsAccepted', '1');
+  localStorage.setItem('appTermsAccepted', '1'); // unified key for main app
+  document.getElementById('termsOverlay').style.display = 'none';
+}
 
-      alert.className = 'alert';
-      alert.textContent = '';
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('token') && localStorage.getItem('user')) {
+    window.location.href = '/'; return;
+  }
+  if (!localStorage.getItem('termsAccepted') && !localStorage.getItem('appTermsAccepted')) {
+    const overlay = document.getElementById('termsOverlay');
+    overlay.style.display = 'flex';
+    overlay.style.animation = 'fadeIn .25s ease';
+  }
+});
 
-      tabs.forEach(t => t.classList.remove('active'));
+function switchTab(tab) {
+  document.getElementById('alertBox').className = 'alert';
+  document.getElementById('alertBox').textContent = '';
+  const isLogin = tab === 'login';
+  document.getElementById('tabLogin').classList.toggle('active', isLogin);
+  document.getElementById('tabSignup').classList.toggle('active', !isLogin);
+  document.getElementById('loginForm').classList.toggle('active', isLogin);
+  document.getElementById('signupForm').classList.toggle('active', !isLogin);
+}
 
-      if (tab === 'login') {
-        tabs[0].classList.add('active');
-        loginForm.classList.add('active');
-        signupForm.classList.remove('active');
-      } else {
-        tabs[1].classList.add('active');
-        signupForm.classList.add('active');
-        loginForm.classList.remove('active');
-      }
-    }
+function showAlert(msg, type = 'error') {
+  const el = document.getElementById('alertBox');
+  el.innerHTML = `<i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}"></i> ${msg}`;
+  el.className = `alert show ${type}`;
+  setTimeout(() => { el.className = 'alert'; }, 5000);
+}
 
-    function showAlert(message, type = 'error') {
-      const alert = document.getElementById('alert');
-      alert.textContent = message;
-      alert.className = `alert ${type}`;
-      setTimeout(() => {
-        alert.className = 'alert';
-      }, 5000);
-    }
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  const isText = inp.type === 'text';
+  inp.type = isText ? 'password' : 'text';
+  btn.innerHTML = `<i class="fas fa-eye${isText ? '' : '-slash'}"></i>`;
+}
 
-    async function handleLogin(event) {
-      event.preventDefault();
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('signupRole').value = role;
+  document.getElementById('roleUser').classList.toggle('selected', role === 'user');
+  document.getElementById('roleCreator').classList.toggle('selected', role === 'creator');
+}
 
-      const phone = document.getElementById('loginPhone').value.trim();
-      const password = document.getElementById('loginPassword').value;
+function checkStrength(pw) {
+  const fill = document.getElementById('strengthFill');
+  const text = document.getElementById('strengthText');
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels = [
+    {w:'0%',c:'#e5e7eb',t:''},
+    {w:'25%',c:'#ef4444',t:'Weak'},
+    {w:'50%',c:'#f97316',t:'Fair'},
+    {w:'75%',c:'#eab308',t:'Good'},
+    {w:'90%',c:'#22c55e',t:'Strong'},
+    {w:'100%',c:'#16a34a',t:'Very Strong'}
+  ];
+  const l = levels[Math.min(score, 5)];
+  fill.style.width = l.w; fill.style.background = l.c;
+  text.textContent = l.t; text.style.color = l.c;
+}
 
-      if (!phone || !password) {
-        showAlert('Please fill in all fields');
-        return;
-      }
+function setLoading(btn, spinner, text, loading) {
+  document.getElementById(btn).disabled = loading;
+  document.getElementById(spinner).style.display = loading ? 'block' : 'none';
+  document.getElementById(text).style.display = loading ? 'none' : 'inline';
+}
 
-      try {
-        const response = await fetch(`${API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ phone, password })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          showAlert('Login successful! Redirecting...', 'success');
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 1000);
-        } else {
-          showAlert(data.error || 'Login failed');
-        }
-      } catch (err) {
-        showAlert('Network error. Please try again.');
-      }
-    }
-
-    async function handleSignup(event) {
-      event.preventDefault();
-
-      const name = document.getElementById('signupName').value.trim();
-      const phone = document.getElementById('signupPhone').value.trim();
-      const email = document.getElementById('signupEmail').value.trim();
-      const password = document.getElementById('signupPassword').value;
-      const role = document.getElementById('signupRole').value;
-
-      if (!name || !phone || !password || !role) {
-        showAlert('Please fill in all required fields');
-        return;
-      }
-
-      if (password.length < 6) {
-        showAlert('Password must be at least 6 characters');
-        return;
-      }
-
-      try {
-        const response = await fetch(`${API_URL}/api/auth/signup`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ name, phone, email, password, role })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('user', JSON.stringify(data.user));
-          showAlert('Account created! Redirecting...', 'success');
-          setTimeout(() => {
-            window.location.href = role === 'creator' ? '/complete-profile.html' : '/';
-          }, 1000);
-        } else {
-          showAlert(data.error || 'Signup failed');
-        }
-      } catch (err) {
-        showAlert('Network error. Please try again.');
-      }
-    }
-
-    // Check if already logged in
-    window.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      
-      if (token && user) {
-        window.location.href = '/';
-      }
+async function handleLogin(e) {
+  e.preventDefault();
+  const phone = document.getElementById('loginPhone').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!phone || !password) { showAlert('Please fill in all fields'); return; }
+  setLoading('loginBtn','loginSpinner','loginBtnText',true);
+  try {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({phone, password})
     });
-  </script>
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      showAlert('Login successful! Redirecting...', 'success');
+      // Owner goes to dedicated owner dashboard
+      const isOwner = data.user.isOwner || data.user.role === 'owner' || data.user.phone === '8410104406';
+      setTimeout(() => { window.location.href = isOwner ? '/owner' : '/'; }, 900);
+    } else { showAlert(data.error || 'Login failed'); }
+  } catch(err) { showAlert('Network error. Please try again.'); }
+  finally { setLoading('loginBtn','loginSpinner','loginBtnText',false); }
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const name = document.getElementById('signupName').value.trim();
+  const phone = document.getElementById('signupPhone').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const role = document.getElementById('signupRole').value;
+  if (!name || !phone || !password || !role) { showAlert('Please fill in all required fields'); return; }
+  if (password.length < 6) { showAlert('Password must be at least 6 characters'); return; }
+  setLoading('signupBtn','signupSpinner','signupBtnText',true);
+  try {
+    const res = await fetch(`${API_URL}/api/auth/signup`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, phone, email, password, role})
+    });
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      showAlert('Account created! Redirecting...', 'success');
+      setTimeout(() => { window.location.href = role === 'creator' ? '/complete-profile.html' : '/'; }, 900);
+    } else { showAlert(data.error || 'Signup failed'); }
+  } catch(err) { showAlert('Network error. Please try again.'); }
+  finally { setLoading('signupBtn','signupSpinner','signupBtnText',false); }
+}
+</script>
 </body>
 </html>

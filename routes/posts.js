@@ -29,7 +29,9 @@ const upload = multer({
     } else {
       cb(new Error('Only image and video files are allowed (JPEG, PNG, GIF, WebP, MP4, WebM)'));
     }
-  }
+  },
+  // Optimize for faster uploads
+  preservePath: false
 });
 
 // Post routes

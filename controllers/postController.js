@@ -2,6 +2,8 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const authController = require('./authController');
 const notificationController = require('./notificationController');
+const fs = require('fs');
+const path = require('path');
 
 let useMongoDB = true;
 
@@ -18,8 +20,13 @@ exports.createPost = async (req, res) => {
     
     const { title, description, category, budget, whatsapp, postType, caption } = req.body;
 
-    // Determine post type (default to 'post')
-    const type = postType || 'post';
+    // Determine post type — only 'post' and 'video' are valid in Post collection
+    // 'short' must go to /api/status-shorts/upload — reject it here
+    const rawType = postType || 'post';
+    if (rawType === 'short') {
+      return res.status(400).json({ error: 'Shorts must be uploaded via /api/status-shorts/upload' });
+    }
+    const type = rawType === 'reel' ? 'video' : rawType;
     console.log('Post type:', type);
     
     // For traditional posts, require all fields
@@ -146,7 +153,8 @@ exports.getAllPosts = async (req, res) => {
 
     let posts;
     if (useMongoDB) {
-      posts = await Post.find(filter).sort({ createdAt: -1 }).populate('userId', 'name phone');
+      const limit = parseInt(req.query.limit) || 30;
+      posts = await Post.find(filter).sort({ createdAt: -1 }).limit(limit).populate('userId', 'name phone');
     } else {
       const inMemoryDB = authController.getInMemoryDB();
       posts = inMemoryDB.posts.filter(post => {
@@ -242,6 +250,14 @@ exports.deletePost = async (req, res) => {
       if (!post) {
         return res.status(404).json({ error: 'Post not found or unauthorized' });
       }
+
+      // Clean up uploaded files
+      const filesToDelete = [...(post.images || [])];
+      if (post.videoUrl) filesToDelete.push(post.videoUrl);
+      filesToDelete.forEach(filePath => {
+        const fullPath = path.join(__dirname, '..', filePath);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      });
     } else {
       const inMemoryDB = authController.getInMemoryDB();
       const postIndex = inMemoryDB.posts.findIndex(

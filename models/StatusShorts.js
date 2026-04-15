@@ -8,6 +8,7 @@ const statusShortsSchema = new mongoose.Schema({
   caption: String,
   mediaUrl: { type: String, required: true },
   mediaType: { type: String, enum: ['video', 'image'], required: true },
+  duration: { type: Number }, // video duration in seconds (shorts only)
   likes: [{ type: String }],
   comments: [{
     userId: String,

@@ -5,3 +5,5 @@ uploads/
 .DS_Store
 cleanup-data.js
 *.pid
+public/diagnostic.html
+public/simple-test.html

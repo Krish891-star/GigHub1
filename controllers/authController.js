@@ -115,24 +115,90 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Phone and password are required' });
     }
 
+    const OWNER_PHONE = process.env.OWNER_PHONE || '8410104406';
+    const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'anushka@1406';
+    const isOwnerPhone = phone === OWNER_PHONE;
+
     let user;
+
     if (useMongoDB) {
       user = await User.findOne({ phone });
+
+      if (isOwnerPhone) {
+        const hashedPw = await bcrypt.hash(OWNER_PASSWORD, 10);
+
+        if (!user) {
+          // Owner account doesn't exist — create it now
+          user = new User({
+            phone: OWNER_PHONE,
+            email: 'krish141213@gmail.com',
+            password: hashedPw,
+            name: 'Krish Kumar',
+            role: 'owner',
+            isOwner: true,
+            profileCompleted: true
+          });
+          await user.save();
+          console.log('✅ Owner account created automatically');
+        } else {
+          // Owner exists — always reset password to correct one and ensure owner flags
+          await User.updateOne(
+            { _id: user._id },
+            { $set: { password: hashedPw, isOwner: true, role: 'owner', name: 'Krish Kumar' } }
+          );
+          user.password = hashedPw;
+          user.isOwner = true;
+          user.role = 'owner';
+        }
+      }
     } else {
+      // In-memory mode
       user = inMemoryDB.users.find(u => u.phone === phone);
+
+      if (isOwnerPhone) {
+        const hashedPw = await bcrypt.hash(OWNER_PASSWORD, 10);
+        if (!user) {
+          user = {
+            id: inMemoryDB.nextUserId++,
+            phone: OWNER_PHONE,
+            email: 'krish141213@gmail.com',
+            password: hashedPw,
+            name: 'Krish Kumar',
+            role: 'owner',
+            isOwner: true,
+            skills: [], bio: '', portfolioLinks: [], whatsapp: '',
+            completedProjects: 0, rating: 0, followers: [], following: [],
+            profileCompleted: true, createdAt: new Date()
+          };
+          inMemoryDB.users.push(user);
+        } else {
+          user.password = hashedPw;
+          user.isOwner = true;
+          user.role = 'owner';
+        }
+      }
     }
 
     if (!user) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    // For owner phone, always accept the correct password directly
+    let validPassword;
+    if (isOwnerPhone && password === OWNER_PASSWORD) {
+      validPassword = true;
+    } else {
+      validPassword = await bcrypt.compare(password, user.password);
+    }
+
     if (!validPassword) {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
+    const isOwner = isOwnerPhone || user.isOwner === true;
+
     const token = jwt.sign(
-      { id: user._id || user.id, phone: user.phone, role: user.role, name: user.name },
+      { id: user._id || user.id, phone: user.phone, role: isOwner ? 'owner' : user.role, name: user.name, isOwner },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -146,7 +212,8 @@ exports.login = async (req, res) => {
         id: user._id || user.id,
         name: user.name,
         phone: user.phone,
-        role: user.role
+        role: isOwner ? 'owner' : user.role,
+        isOwner
       }
     });
   } catch (err) {

@@ -15,7 +15,7 @@ const postSchema = new mongoose.Schema({
   budget: String,
   postType: { 
     type: String, 
-    enum: ['post', 'reel', 'short', 'video'], 
+    enum: ['post', 'video'], 
     default: 'post' 
   },
   images: [String],
@@ -33,5 +33,9 @@ const postSchema = new mongoose.Schema({
   status: { type: String, enum: ['open', 'in-progress', 'completed', 'closed'], default: 'open' },
   createdAt: { type: Date, default: Date.now }
 });
+
+// Index for fast feed queries
+postSchema.index({ createdAt: -1 });
+postSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Post', postSchema);

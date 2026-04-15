@@ -8,6 +8,7 @@ const fs = require('fs');
 const helmet = require('helmet');
 const xss = require('xss-clean');
 const mongoSanitize = require('mongo-sanitize');
+const compression = require('compression');
 const connectDB = require('./config/db');
 
 // Import routes
@@ -21,6 +22,7 @@ const bookmarkRoutes = require('./routes/bookmarks');
 const searchRoutes = require('./routes/search');
 const analyticsRoutes = require('./routes/analytics');
 const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 
 // Import middleware
 const { apiLimiter, authLimiter, uploadLimiter } = require('./middleware/rateLimiter');
@@ -65,26 +67,30 @@ app.use(helmet({
 
 // Enable CORS with options
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*',
+  origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
 
-// Prevent XSS attacks
-app.use(xss());
+// Prevent XSS attacks — exclude auth routes so passwords with special chars aren't mangled
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/auth/')) return next();
+  xss()(req, res, next);
+});
 
-// Sanitize data (prevent NoSQL injection)
+// Sanitize data (prevent NoSQL injection) — preserve password field
 app.use((req, res, next) => {
   if (req.body) {
+    const savedPassword = req.body.password;
     req.body = mongoSanitize(req.body);
+    if (savedPassword !== undefined) req.body.password = savedPassword;
   }
-  if (req.params) {
-    req.params = mongoSanitize(req.params);
-  }
-  if (req.query) {
-    req.query = mongoSanitize(req.query);
-  }
+  if (req.params) req.params = mongoSanitize(req.params);
+  if (req.query) req.query = mongoSanitize(req.query);
   next();
 });
+
+// Gzip compression for all responses
+app.use(compression({ level: 6, threshold: 1024 }));
 
 // Rate limiting
 app.use('/api/', apiLimiter);
@@ -93,20 +99,45 @@ app.use('/api/auth/', authLimiter);
 // Regular middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: 0,
+  etag: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    } else if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    } else if (filePath.match(/\.(png|jpg|jpeg|gif|ico|webp|svg)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+  }
+}));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '7d',
+  etag: true
+}));
 
 // Session configuration
 app.use(session({
-  secret: 'gighub-session-secret',
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'gighub-session-secret-change-in-prod',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 
+  }
 }));
 
 // Create uploads directory if not exists
 if (!fs.existsSync('./uploads')) {
-  fs.mkdirSync('./uploads');
+  fs.mkdirSync('./uploads', { recursive: true });
+  console.log('📁 Created uploads directory');
+}
+if (process.env.NODE_ENV === 'production') {
+  console.log('⚠️  Note: Render free tier has ephemeral storage — uploads reset on restart. Use cloud storage (S3/Cloudinary) for persistent files.');
 }
 
 // Secure Multer configuration for file uploads
@@ -139,39 +170,40 @@ const upload = multer({
   limits: {
     fileSize: 100 * 1024 * 1024, // 100MB limit
     files: 5 // Max 5 files
-  }
+  },
+  // Optimize for faster uploads
+  preservePath: false
 });
 
 // ==========================================
 // MONGODB CONNECTION
 // ==========================================
-let useMongoDB = true;
+let useMongoDB = false; // start false, set true only after confirmed connection
+let mongoInitialized = false; // guard against premature disconnect events
+
+const setAllMongoStatus = (status) => {
+  useMongoDB = status;
+  authController.setMongoDBStatus(status);
+  postController.setMongoDBStatus(status);
+  statusShortsController.setMongoDBStatus(status);
+  creatorController.setMongoDBStatus(status);
+  followController.setMongoDBStatus(status);
+  notificationController.setMongoDBStatus(status);
+  bookmarkController.setMongoDBStatus(status);
+  searchController.setMongoDBStatus(true);
+  analyticsController.setMongoDBStatus(status);
+  userController.setMongoDBStatus(status);
+};
 
 connectDB()
   .then(connected => {
-    useMongoDB = connected;
-    // Update all controllers with MongoDB status
-    authController.setMongoDBStatus(useMongoDB);
-    postController.setMongoDBStatus(useMongoDB);
-    statusShortsController.setMongoDBStatus(useMongoDB);
-    creatorController.setMongoDBStatus(useMongoDB);
-    followController.setMongoDBStatus(useMongoDB);
-    notificationController.setMongoDBStatus(useMongoDB);
-    bookmarkController.setMongoDBStatus(useMongoDB);
-    searchController.setMongoDBStatus(true); // Search works with both
-    analyticsController.setMongoDBStatus(useMongoDB);
-    userController.setMongoDBStatus(useMongoDB);
+    mongoInitialized = true;
+    setAllMongoStatus(connected);
+    if (connected) console.log('✅ App running with MongoDB');
   })
-  .catch(err => {
-    useMongoDB = false;
-    authController.setMongoDBStatus(false);
-    postController.setMongoDBStatus(false);
-    statusShortsController.setMongoDBStatus(false);
-    creatorController.setMongoDBStatus(false);
-    followController.setMongoDBStatus(false);
-    notificationController.setMongoDBStatus(false);
-    bookmarkController.setMongoDBStatus(false);
-    userController.setMongoDBStatus(false);
+  .catch(() => {
+    mongoInitialized = true;
+    setAllMongoStatus(false);
   });
 
 // In-memory fallback storage
@@ -200,6 +232,46 @@ app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+
+app.get('/api/health', (req, res) => {
+  const mongoose = require('mongoose');
+  res.json({
+    status: 'ok',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    dbName: mongoose.connection.name || 'none',
+    mode: useMongoDB ? 'mongodb' : 'in-memory'
+  });
+});
+
+// One-time owner account setup — call GET /api/setup-owner to create/reset owner account
+app.get('/api/setup-owner', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    const User = require('./models/User');
+    const OWNER_PHONE = process.env.OWNER_PHONE || '8410104406';
+    const OWNER_PASSWORD = process.env.OWNER_PASSWORD || 'anushka@1406';
+    const hashedPw = await bcrypt.hash(OWNER_PASSWORD, 10);
+
+    const existing = await User.findOne({ phone: OWNER_PHONE });
+    if (existing) {
+      await User.updateOne(
+        { phone: OWNER_PHONE },
+        { $set: { password: hashedPw, isOwner: true, role: 'owner', name: 'Krish Kumar', email: 'krish141213@gmail.com' } }
+      );
+      return res.json({ success: true, message: 'Owner account updated. You can now login.' });
+    }
+    const user = new User({
+      phone: OWNER_PHONE, email: 'krish141213@gmail.com',
+      password: hashedPw, name: 'Krish Kumar',
+      role: 'owner', isOwner: true, profileCompleted: true
+    });
+    await user.save();
+    res.json({ success: true, message: 'Owner account created. You can now login.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ==========================================
 // DASHBOARD ROUTES
@@ -253,7 +325,13 @@ app.get('/api/dashboard', authenticateToken, async (req, res) => {
 // SERVE FRONTEND
 // ==========================================
 app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/owner', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.sendFile(path.join(__dirname, 'public', 'owner.html'));
 });
 
 // Serve manifest.json with correct content type
@@ -283,6 +361,7 @@ app.get('/simple-test', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
@@ -338,45 +417,25 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-mongoose.connection.on('error', () => {
-  console.log('⚠️  Switching to in-memory storage');
-  useMongoDB = false;
-  authController.setMongoDBStatus(false);
-  postController.setMongoDBStatus(false);
-  statusShortsController.setMongoDBStatus(false);
-  creatorController.setMongoDBStatus(false);
-  followController.setMongoDBStatus(false);
-  notificationController.setMongoDBStatus(false);
+mongoose.connection.on('error', (err) => {
+  if (mongoInitialized && useMongoDB) {
+    console.log('⚠️  MongoDB error, switching to in-memory storage');
+    setAllMongoStatus(false);
+  }
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️  MongoDB disconnected, using in-memory storage');
-  useMongoDB = false;
-  authController.setMongoDBStatus(false);
-  postController.setMongoDBStatus(false);
-  statusShortsController.setMongoDBStatus(false);
-  creatorController.setMongoDBStatus(false);
-  followController.setMongoDBStatus(false);
-  notificationController.setMongoDBStatus(false);
+  // Only react after initial connection is established, and not during reconnect attempts
+  if (mongoInitialized && useMongoDB && mongoose.connection.readyState !== 2) {
+    console.log('⚠️  MongoDB disconnected, switching to in-memory storage');
+    setAllMongoStatus(false);
+  }
 });
 
 // ==========================================
 // SECURITY: Disable dangerous HTTP methods
 // ==========================================
 app.disable('x-powered-by'); // Remove X-Powered-By header
-
-// ==========================================
-// SECURITY MONITORING
-// ==========================================
-// Log suspicious activities
-app.use((req, res, next) => {
-  // Log unusual user agents
-  const userAgent = req.headers['user-agent'] || '';
-  if (userAgent.includes('sqlmap') || userAgent.includes('nikto')) {
-    console.warn(`🚨 Suspicious activity detected from IP: ${req.ip}`);
-  }
-  next();
-});
 
 // Start server
 app.listen(PORT, () => {
